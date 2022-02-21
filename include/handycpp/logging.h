@@ -21,13 +21,13 @@ constexpr auto trim_filename(std::string_view path)
   return path.substr(path.find_last_of("/\\") + 1);
 }
 
-#define g_debug printf
+#define FUN_PRINT(fmt, ...) printf(fmt"\n", ##__VA_ARGS__)
 
 #define FUN_INFO(fmt, ...)                                                     \
     do {                                                                       \
         auto tid = gettid();                                                   \
         auto pid = getpid();                                                   \
-        g_info("%d %d %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
+        FUN_PRINT("%d %d info %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
            __LINE__, __FUNCTION__, ##__VA_ARGS__);                        \
     } while (0)
 
@@ -35,7 +35,7 @@ constexpr auto trim_filename(std::string_view path)
     do {                                                                       \
         auto tid = gettid();                                                   \
         auto pid = getpid();                                                   \
-        g_info("%d %d %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
+        FUN_PRINT("%d %d error %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
            __LINE__, __FUNCTION__, ##__VA_ARGS__);                        \
     } while (0)
 
@@ -43,7 +43,7 @@ constexpr auto trim_filename(std::string_view path)
     do {                                                                       \
         auto tid = gettid();                                                   \
         auto pid = getpid();                                                   \
-        g_debug("%d %d %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
+        FUN_PRINT("%d %d debug %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
            __LINE__, __FUNCTION__, ##__VA_ARGS__);                        \
     } while (0)
 
@@ -52,7 +52,7 @@ constexpr auto trim_filename(std::string_view path)
         char buff[40]; \
         auto tid = gettid();                                                   \
         auto pid = getpid();                                                   \
-        g_warning("%d %d %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
+        FUN_PRINT("%d %d warning %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
            __LINE__, __FUNCTION__, ##__VA_ARGS__);                        \
     } while (0)
 
@@ -60,7 +60,7 @@ constexpr auto trim_filename(std::string_view path)
     do {                                                                       \
         auto tid = gettid();                                                   \
         auto pid = getpid();                                                   \
-        g_debug("%d %d %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
+        FUN_PRINT("%d %d trace %s:%d %s > " fmt, pid, tid, trim_filename(__FILE__).data(),          \
            __LINE__, __FUNCTION__, ##__VA_ARGS__);                        \
     } while (0)
 
