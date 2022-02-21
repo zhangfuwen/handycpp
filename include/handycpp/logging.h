@@ -21,11 +21,6 @@ constexpr auto trim_filename(std::string_view path)
   return path.substr(path.find_last_of("/\\") + 1);
 }
 
-static_assert(trim_filename("/home/user/src/project/src/file.cpp") == "file.cpp");
-static_assert(trim_filename(R"(C:\\user\src\project\src\file.cpp)") == "file.cpp");
-static_assert(trim_filename("./file.cpp") == "file.cpp");
-static_assert(trim_filename("file.cpp") == "file.cpp");
-
 #define g_debug printf
 
 #define FUN_INFO(fmt, ...)                                                     \
