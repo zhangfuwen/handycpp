@@ -5,7 +5,7 @@ project(handycpp VERSION 1.0.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 
 add_library(${PROJECT_NAME} INTERFACE)
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 
 target_include_directories(
         ${PROJECT_NAME}
