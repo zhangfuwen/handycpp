@@ -6,7 +6,6 @@
 #define HANDYCPP_LOGGING_H
 
 #include <string_view>
-#include <execinfo.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <cstdio>
