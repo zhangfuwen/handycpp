@@ -21,7 +21,9 @@ constexpr auto trim_filename(std::string_view path)
   return path.substr(path.find_last_of("/\\") + 1);
 }
 
+#ifndef FUN_PRINT
 #define FUN_PRINT(fmt, ...) printf(fmt"\n", ##__VA_ARGS__)
+#endif
 
 #define FUN_INFO(fmt, ...)                                                     \
     do {                                                                       \
