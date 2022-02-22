@@ -57,6 +57,9 @@ static inline bool writeBmp(std::string outPath, unsigned char * rgb, int w, int
     bmpinfoheader[10] = (unsigned char)(       h>>16);
     bmpinfoheader[11] = (unsigned char)(       h>>24);
 
+    if(std::filesystem::exists(outPath)) {
+        std::filesystem::remove(outPath);
+    }
     f = fopen(outPath.c_str(),"w+");
     if(f == nullptr) {
         auto err= errno;
