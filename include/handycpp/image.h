@@ -57,7 +57,7 @@ static inline bool writeBmp(std::string outPath, unsigned char * rgb, int w, int
     bmpinfoheader[10] = (unsigned char)(       h>>16);
     bmpinfoheader[11] = (unsigned char)(       h>>24);
 
-    f = fopen(outPath.c_str(),"wb");
+    f = fopen(outPath.c_str(),"w+");
     if(f == nullptr) {
         auto err= errno;
         FUN_ERROR("filed to open %s, %s", outPath.c_str(), strerror(err));
