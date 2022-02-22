@@ -8,12 +8,16 @@
 #include <cstring>
 namespace handycpp::image {
 
-static inline void writeBmp(std::string outPath, unsigned char * rgb, int w, int h, int pixel_stride =3)
+static inline bool writeBmp(std::string outPath, unsigned char * rgb, int w, int h, int pixel_stride =3)
 {
     FILE *f;
     int filesize = 54 + 3*w*h;  //w is your image width, h is image height, both int
 
     auto img = (unsigned char *)malloc(3*w*h);
+    if(img == nullptr) {
+        FUN_ERROR("failed to malloc, size %d", 3*w*h);
+        return false;
+    }
     memset(img,0,3*w*h);
     unsigned char r,g,b,a;
 
@@ -54,6 +58,12 @@ static inline void writeBmp(std::string outPath, unsigned char * rgb, int w, int
     bmpinfoheader[11] = (unsigned char)(       h>>24);
 
     f = fopen(outPath.c_str(),"wb");
+    if(f == nullptr) {
+        auto err= errno;
+        FUN_ERROR("filed to open %s, %s", outPath.c_str(), strerror(err));
+        free(img);
+        return false;
+    }
     fwrite(bmpfileheader,1,14,f);
     fwrite(bmpinfoheader,1,40,f);
     for(int i=0; i<h; i++)
@@ -64,6 +74,7 @@ static inline void writeBmp(std::string outPath, unsigned char * rgb, int w, int
 
     free(img);
     fclose(f);
+    return true;
 
 }
 }
