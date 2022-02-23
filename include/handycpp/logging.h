@@ -16,10 +16,16 @@
 #include <filesystem>
 #include <syslog.h>
 
-constexpr auto trim_filename(std::string_view path)
+#if __cplusplus > 201703L
+constexpr std::string_view trim_filename(std::string_view path)
 {
   return path.substr(path.find_last_of("/\\") + 1);
 }
+#else
+std::string trim_filename(std::string path) {
+    return path.substr(path.find_last_of("/\\") + 1);
+}
+#endif
 
 #ifndef FUN_PRINT
 #define FUN_PRINT(fmt, ...) printf(fmt"\n", ##__VA_ARGS__)
