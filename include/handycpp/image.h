@@ -6,6 +6,7 @@
 #define HANDYCPP_IMAGE_H
 
 #include "handycpp/logging.h"
+#include "handycpp/file.h"
 #include <cstring>
 namespace handycpp::image {
 
@@ -58,8 +59,8 @@ static inline bool writeBmp(std::string outPath, unsigned char * rgb, int w, int
     bmpinfoheader[10] = (unsigned char)(       h>>16);
     bmpinfoheader[11] = (unsigned char)(       h>>24);
 
-    if(std::filesystem::exists(outPath)) {
-        std::filesystem::remove(outPath);
+    if(file::is_file_exist(outPath.c_str())) {
+        file::removeFile(outPath);
     }
     f = fopen(outPath.c_str(),"w+");
     if(f == nullptr) {

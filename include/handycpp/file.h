@@ -79,8 +79,13 @@ static inline bool saveFile(char *data, int size, const std::string& filename = 
     return true;
 }
 
+static inline bool is_file_exist(const char *fileName)
+{
+    std::ifstream infile(fileName);
+    return infile.good();
+}
 
-void listFiles(const std::string& path, std::vector<std::string> &files, bool recursive = false, const bool showHiddenDirs = false, bool include_folders=false){
+static inline void listFiles(const std::string& path, std::vector<std::string> &files, bool recursive = false, const bool showHiddenDirs = false, bool include_folders=false){
     DIR *dpdf;
     struct dirent *epdf;
     dpdf = opendir(path.c_str());
@@ -103,7 +108,7 @@ void listFiles(const std::string& path, std::vector<std::string> &files, bool re
     closedir(dpdf);
 }
 
-void listFiles(const std::string &path, std::function<void(const std::string &)> cb) {
+static inline void listFiles(const std::string &path, std::function<void(const std::string &)> cb) {
     if (auto dir = opendir(path.c_str())) {
         while (auto f = readdir(dir)) {
             if (!f->d_name || f->d_name[0] == '.') continue;
