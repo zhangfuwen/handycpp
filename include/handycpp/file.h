@@ -31,7 +31,7 @@ static inline int removeDir(std::string dir) {
 }
 
 
-static inline auto getFileSize(const std::string& path)
+static inline size_t getFileSize(const std::string& path)
 {
     FILE *f;
     f = fopen(path.c_str() , "r");
