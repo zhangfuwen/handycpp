@@ -5,6 +5,7 @@
 #ifndef HANDYCPP_IMAGE_H
 #define HANDYCPP_IMAGE_H
 
+#include "handycpp/logging.h"
 #include <cstring>
 namespace handycpp::image {
 
