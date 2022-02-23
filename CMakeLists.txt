@@ -16,8 +16,8 @@ target_include_directories(
 
 # test
 
-add_executable(test test/test.cpp)
-target_include_directories(test PRIVATE ${PROJECT_SOURCE_DIR}/include)
+add_executable(handycpp_test test/test.cpp)
+target_include_directories(handycpp_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 # Install
 install(TARGETS ${PROJECT_NAME}
