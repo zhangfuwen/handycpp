@@ -27,8 +27,10 @@ static inline std::string trim_filename(std::string path) {
 }
 #endif
 
+inline decltype(printf) * g_logging_func = printf;
+
 #ifndef FUN_PRINT
-#define FUN_PRINT(fmt, ...) printf(fmt"\n", ##__VA_ARGS__)
+#define FUN_PRINT(fmt, ...) g_logging_func(fmt"\n", ##__VA_ARGS__)
 #endif
 
 #define FUN_INFO(fmt, ...)                                                     \
