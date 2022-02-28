@@ -46,6 +46,31 @@ struct mem_chunk {
     size_t size;
 };
 
+/**
+ * for_each_line
+ * @param filePath
+ * @param lineOp
+//  lineOp(lineNumber, lineString)
+//  lineNumber is zero-based
+ * @return
+ *      return -1 on error, and errno is set
+ *      return number of lines parsed
+ */
+static inline int for_each_line(std::string filePath, std::function<void(int, std::string)> lineOp) {
+    std::ifstream input(filePath);
+    if(!input.good()) {
+        errno = ENOENT;
+        return -1;
+    }
+    int i = 0;
+    for( std::string line; getline( input, line ); )
+    {
+        lineOp(i, line);
+        i++;
+    }
+    return i;
+}
+
 static inline mem_chunk readFile(std::string path, size_t size = 0) {
     if(size == 0) {
         size = getFileSize(path);
