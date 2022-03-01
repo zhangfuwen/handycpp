@@ -5,6 +5,7 @@
 #ifndef HANDYCPP_EXEC_H
 #define HANDYCPP_EXEC_H
 #include <string>
+#include <array>
 
 static inline std::string exec(const char *cmd) {
   std::array<char, 128> buffer;
