@@ -8,7 +8,30 @@
 #include "handycpp/logging.h"
 #include "handycpp/file.h"
 #include <cstring>
+#include "lodepng.h"
 namespace handycpp::image {
+
+struct rgba_data {
+    unsigned  width;
+    unsigned  height;
+    std::vector<unsigned char> rgba_image;
+};
+
+static inline rgba_data readPngAsRgba(std::string path) {
+    rgba_data data;
+
+    //decode
+    unsigned error = lodepng::decode(data.rgba_image, data.width, data.height, path);
+
+    //if there's an error, display it
+    if(error) {
+        FUN_ERROR("failed to decode %s, %s", path.c_str(), lodepng_error_text(error));
+        data.width = 0;
+        data.height = 0;
+        return data;
+    }
+    return data;
+}
 
 static inline bool writeBmp(std::string outPath, unsigned char * rgb, int w, int h, int pixel_stride =3)
 {

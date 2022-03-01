@@ -5,16 +5,30 @@ project(handycpp VERSION 1.0.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
+ExternalProject_Add(lodepng
+        GIT_REPOSITORY  https://github.com/lvandeve/lodepng
+        GIT_TAG master
+        SOURCE_DIR "${CMAKE_BINARY_DIR}/lodepng/src"
+        BINARY_DIR "${CMAKE_BINARY_DIR}/lodepng/build"
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ""
+        TEST_COMMAND ""
+        )
 
 
-add_library(${PROJECT_NAME} INTERFACE)
+add_library(${PROJECT_NAME} STATIC
+        ${CMAKE_BINARY_DIR}/lodepng/src/lodepng.cpp
+        )
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+add_dependencies(${PROJECT_NAME} lodepng)
 
 target_include_directories(
         ${PROJECT_NAME}
         INTERFACE
         $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC
+        ${CMAKE_BINARY_DIR}/lodepng/src/
 )
 
 # test
