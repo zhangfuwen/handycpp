@@ -11,6 +11,7 @@ ExternalProject_Add(lodepng
         GIT_TAG master
         SOURCE_DIR "${CMAKE_BINARY_DIR}/lodepng/src"
         BINARY_DIR "${CMAKE_BINARY_DIR}/lodepng/build"
+        CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
         INSTALL_COMMAND ""
         TEST_COMMAND ""
