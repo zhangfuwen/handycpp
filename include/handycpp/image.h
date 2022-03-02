@@ -29,7 +29,7 @@ static inline bool writeBmp(std::string outPath, unsigned char * rgb, int w, int
         return false;
     }
     memset(img,0,3*w*h);
-    unsigned char r,g,b,a;
+    unsigned char r,g,b;
 
     for(int i=0; i<w; i++)
     {
@@ -40,9 +40,6 @@ static inline bool writeBmp(std::string outPath, unsigned char * rgb, int w, int
             r = *(rgb + w * y * pixel_stride);
             g = *(rgb + w * y * pixel_stride + 1);
             b = *(rgb + w * y * pixel_stride + 2);
-            if (r > 255) r=255;
-            if (g > 255) g=255;
-            if (b > 255) b=255;
             img[(x+y*w)*3+2] = (unsigned char)(r);
             img[(x+y*w)*3+1] = (unsigned char)(g);
             img[(x+y*w)*3+0] = (unsigned char)(b);

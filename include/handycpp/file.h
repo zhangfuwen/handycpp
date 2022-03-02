@@ -36,7 +36,13 @@ static inline size_t getFileSize(const std::string& path)
     FILE *f;
     f = fopen(path.c_str() , "r");
     int ret = fseek(f, 0, SEEK_END);
-    size_t len = (unsigned long)ftell(f);
+    if(ret < 0) {
+        return ret;
+    }
+    auto len = ftell(f);
+    if(len < 0) {
+        return len;
+    }
     fclose(f);
     return len;
 }
