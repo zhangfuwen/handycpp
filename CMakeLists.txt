@@ -35,11 +35,14 @@ target_include_directories(
 )
 
 # test
+option(TEST_ON "build and run test" FALSE)
 
-add_executable(handycpp_test test/test.cpp)
-target_include_directories(handycpp_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
-target_compile_features(handycpp_test INTERFACE cxx_std_20)
-target_compile_options(handycpp_test PRIVATE -Wall -Werror -Wextra -pedantic)
+if(TEST_ON)
+    add_executable(handycpp_test test/test.cpp)
+    target_include_directories(handycpp_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    target_compile_features(handycpp_test INTERFACE cxx_std_20)
+    target_compile_options(handycpp_test PRIVATE -Wall -Werror -Wextra -pedantic)
+endif()
 
 # Install
 install(TARGETS ${PROJECT_NAME}
