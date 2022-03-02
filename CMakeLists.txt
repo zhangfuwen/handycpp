@@ -4,6 +4,8 @@ project(handycpp VERSION 1.0.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall -Werror -Wextra -pedantic")
+
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
 include(ExternalProject)
 ExternalProject_Add(lodepng
