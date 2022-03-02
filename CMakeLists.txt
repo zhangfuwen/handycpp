@@ -4,8 +4,6 @@ project(handycpp VERSION 1.0.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall -Werror -Wextra -pedantic")
-
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
 include(ExternalProject)
 ExternalProject_Add(lodepng
@@ -41,6 +39,7 @@ target_include_directories(
 add_executable(handycpp_test test/test.cpp)
 target_include_directories(handycpp_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_compile_features(handycpp_test INTERFACE cxx_std_20)
+target_compile_options(handycpp_test PRIVATE -Wall -Werror -Wextra -pedantic)
 
 # Install
 install(TARGETS ${PROJECT_NAME}
