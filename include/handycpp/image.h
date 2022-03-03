@@ -18,6 +18,8 @@ struct rgba_data {
 
 rgba_data readPngAsRgba(std::string path);
 
+int saveRgbaToPng(std::string outPath, unsigned char * rgba, int w, int h);
+
 static inline bool writeBmp(std::string outPath, unsigned char * rgb, int w, int h, int pixel_stride =3)
 {
     FILE *f;

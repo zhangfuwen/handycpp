@@ -42,6 +42,7 @@ if(TEST_ON)
     target_include_directories(handycpp_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_features(handycpp_test INTERFACE cxx_std_20)
     target_compile_options(handycpp_test PRIVATE -Wall -Werror -Wextra -pedantic)
+    target_link_libraries(handycpp_test PRIVATE handycpp)
 endif()
 
 # Install

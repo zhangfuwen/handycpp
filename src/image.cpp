@@ -21,5 +21,12 @@ namespace handycpp::image {
         }
         return data;
     }
+    /*
+     * return 0 on success
+     */
+    int saveRgbaToPng(std::string path, unsigned char * rgba, int w, int h) {
+        unsigned int error = lodepng::encode(path, rgba, w, h);
+        return error;
+    }
 
 }

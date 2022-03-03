@@ -11,9 +11,10 @@
 
 
 int main() {
-    auto chunk = handycpp::file::readFile("/data1/XR/ndk-samples/hello-gl2/124.rgba");
+    auto chunk = handycpp::file::readFile("/data1/XR/NDK_OpenGLES_3_0/2048_2048.rgb");
     if(chunk.size != 0) {
-        handycpp::image::writeBmp("/data1/XR/ahardware_buffer/1.bmp", (unsigned char *)chunk.addr, 720, 1237, 4);
+//        handycpp::image::writeBmp("/data1/XR/NDK_OpenGLES_3_0/2048_2048.png", (unsigned char *)chunk.addr, 2048, 2048, 3);
+        handycpp::image::saveRgbaToPng("/data1/XR/NDK_OpenGLES_3_0/2048_2048.png", (unsigned char *)chunk.addr, 2048, 2048);
     } else {
         printf("failed to read");
     }
