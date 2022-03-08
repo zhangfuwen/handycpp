@@ -106,6 +106,7 @@ static inline mem_chunk readFile(std::string path, size_t size = 0) {
 static inline std::string readTextFile(std::string path) {
     std::stringstream  stream;
     int ret = for_each_line(path, [&stream](int n, std::string line) {
+        (void)n;
       stream << line;
     });
     if(ret < 0) {
