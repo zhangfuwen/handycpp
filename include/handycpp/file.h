@@ -13,8 +13,12 @@
 #include <cstring>
 #include <string>
 #include <functional>
+#include <libgen.h>
 
 #include "handycpp/logging.h"
+#if __cplusplus >= 201703L
+#include <filesystem>
+#endif
 
 namespace handycpp::file {
 
@@ -83,6 +87,24 @@ static inline bool is_file_exist(const char *fileName)
     return infile.good();
 }
 
+static inline bool is_dir_exist(const char *dirname) {
+#if __cplusplus >= 201703L
+    return std::filesystem::is_directory(dirname);
+#else
+    struct stat info;
+
+    int statRC = stat( path, &info );
+    if( statRC != 0 )
+    {
+        if (errno == ENOENT)  { return 0; } // something along the path does not exist
+        if (errno == ENOTDIR) { return 0; } // something in path prefix is not a dir
+        return -1;
+    }
+
+    return ( info.st_mode & S_IFDIR ) ? 1 : 0;
+#endif
+}
+
 static inline mem_chunk readFile(std::string path, size_t size = 0) {
     if(size == 0) {
         size = getFileSize(path);
@@ -115,8 +137,28 @@ static inline std::string readTextFile(std::string path) {
     return stream.str();
 }
 
-static inline bool saveFile(char *data, int size, const std::string& filename = "") {
+inline static int mkdir(const char * path, bool recursive = false) {
+#if __cplusplus >= 201703L
+    std::error_code ec;
+    std::filesystem::create_directories(path, ec);
+    return ec.value();
+#else
+    return -1; // not implemented, :)
+#endif
+}
+
+static inline bool saveFile(char *data, int size, const std::string& filename = "", bool createdir = false) {
     FUN_DEBUG("filepath %s", filename.c_str());
+    auto filename_dump = strdup(filename.c_str());
+    std::string dir(dirname(filename_dump));
+    free(filename_dump);
+    if(!is_dir_exist(dir.c_str()) && createdir) {
+        auto ret = mkdir(dir.c_str());
+        if(ret != 0) {
+            return false;
+        }
+    }
+
     std::ofstream myfile;
     myfile.open (filename);
     if(!myfile.is_open()) {

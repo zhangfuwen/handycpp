@@ -1,5 +1,7 @@
 # handycpp
 
+handy(maybe also buggy) C++ helper functions.
+
 
 ## dyntype
 
