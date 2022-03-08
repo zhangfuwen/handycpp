@@ -15,6 +15,59 @@ template <class T> inline std::string to_string(const T &t) {
     return ss.str();
 }
 
+namespace implicit_conversion {
+
+
+    // string wrapper, for implicit conversion
+    struct sw {
+    public:
+        sw(std::string s) {
+            val = s;
+        }
+
+        operator float() {
+            return std::stof(val);
+        }
+
+        operator double() {
+            return std::stod(val);
+        }
+
+        operator long double() {
+            return std::stold(val);
+        }
+
+        operator int() {
+            return std::stoi(val);
+        }
+        operator unsigned int() {
+            return std::stoul(val);
+        }
+
+        operator long() {
+            return std::stol(val);
+        }
+        operator unsigned long() {
+            return std::stoul(val);
+        }
+
+        operator long long() {
+            return std::stoll(val);
+        }
+
+        operator unsigned long long() {
+            return std::stoull(val);
+        }
+
+    private:
+        std::string val;
+    };
+
+
+
+}
+
+
 namespace concat {
 std::string operator+(std::string s, char i) { return s + to_string(i); }
 std::string operator+(std::string s, unsigned char i) { return s + to_string(i); }

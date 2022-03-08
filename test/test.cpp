@@ -40,5 +40,13 @@ int main() {
     std::string hi = "hi";
     assert("hi6" == hi + 6 );
     assert("hi6" == hi + 6L );
+
+    assert(  0 + s1 - 5 == -3);
+    assert(  0.0f + s1 - 5.0 == -3.0);
+
+    using namespace handycpp::dyntype::implicit_conversion;
+    assert( (int)(sw)s1 + 3 == 5);
+    using namespace handycpp::dyntype::arithmetic;
+    assert( 0 + s1 + 3 == 5);
     return 0;
 }
