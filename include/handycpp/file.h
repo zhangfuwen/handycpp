@@ -77,6 +77,12 @@ static inline int for_each_line(std::string filePath, std::function<void(int, st
     return i;
 }
 
+static inline bool is_file_exist(const char *fileName)
+{
+    std::ifstream infile(fileName);
+    return infile.good();
+}
+
 static inline mem_chunk readFile(std::string path, size_t size = 0) {
     if(size == 0) {
         size = getFileSize(path);
@@ -97,6 +103,17 @@ static inline mem_chunk readFile(std::string path, size_t size = 0) {
     return ret;
 }
 
+static inline std::string readTextFile(std::string path) {
+    std::stringstream  stream;
+    int ret = for_each_line(path, [&stream](int n, std::string line) {
+      stream << line;
+    });
+    if(ret < 0) {
+        return "";
+    }
+    return stream.str();
+}
+
 static inline bool saveFile(char *data, int size, const std::string& filename = "") {
     FUN_DEBUG("filepath %s", filename.c_str());
     std::ofstream myfile;
@@ -110,11 +127,6 @@ static inline bool saveFile(char *data, int size, const std::string& filename = 
     return true;
 }
 
-static inline bool is_file_exist(const char *fileName)
-{
-    std::ifstream infile(fileName);
-    return infile.good();
-}
 
 static inline void listFiles(const std::string& path, std::vector<std::string> &files, bool recursive = false, const bool showHiddenDirs = false, bool include_folders=false){
     DIR *dpdf;
