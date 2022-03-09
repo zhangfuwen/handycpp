@@ -12,10 +12,13 @@
 #include <libgen.h>
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include "handycpp/logging.h"
 #if __cplusplus >= 201703L
 #include <filesystem>
+#else
+#include <sys/stat.h>
 #endif
 
 namespace handycpp::file {
@@ -81,14 +84,11 @@ static inline bool is_dir_exist(const char *dirname) {
 #else
     struct stat info;
 
-    int statRC = stat(path, &info);
-    if (statRC != 0) {
-        if (errno == ENOENT) {
-            return 0;
-        } // something along the path does not exist
-        if (errno == ENOTDIR) {
-            return 0;
-        } // something in path prefix is not a dir
+    int statRC = stat( dirname, &info );
+    if( statRC != 0 )
+    {
+        if (errno == ENOENT)  { return 0; } // something along the path does not exist
+        if (errno == ENOTDIR) { return 0; } // something in path prefix is not a dir
         return -1;
     }
 
@@ -117,7 +117,7 @@ static inline mem_chunk readFile(std::string path, size_t size = 0) {
 }
 
 static inline std::string readTextFile(std::string path) {
-    std::stringstream stream;
+    std::ostringstream  stream;
     int ret = for_each_line(path, [&stream](int n, std::string line) {
         (void)n;
         stream << line;
