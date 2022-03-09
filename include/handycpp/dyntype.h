@@ -132,7 +132,6 @@ inline unsigned long long operator/(unsigned long long i, const std::string &s) 
 inline float operator/(float i, const std::string &s) { return i / std::stof(s); }
 inline double operator/(double i, const std::string &s) { return i / std::stod(s); }
 inline long double operator/(long double i, const std::string &s) { return i / std::stold(s); }
-
 } // namespace arithmetic
 
 } // namespace handycpp::dyntype
