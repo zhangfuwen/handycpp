@@ -5,11 +5,10 @@
 #ifndef HANDYCPP_STRING_H
 #define HANDYCPP_STRING_H
 
-#include <string>
 #include <algorithm>
 #include <climits>
-#include <algorithm>
 #include <cmath>
+#include <string>
 namespace handycpp::string {
 
 // trim from start (in place)
@@ -25,37 +24,33 @@ static inline std::string &rtrim(std::string &s) {
 }
 
 // trim from both ends (in place)
-static inline std::string &trim(std::string &s) {
+[[maybe_unused]] inline std::string &trim(std::string &s) {
     ltrim(s);
     rtrim(s);
     return s;
 }
 
 // trim from start (copying)
-static inline std::string ltrim_copy(std::string s) {
+[[maybe_unused]] inline std::string ltrim_copy(std::string s) {
     ltrim(s);
     return s;
 }
 
 // trim from end (copying)
-static inline std::string rtrim_copy(std::string s) {
+[[maybe_unused]] inline std::string rtrim_copy(std::string s) {
     rtrim(s);
     return s;
 }
 
 // trim from both ends (copying)
-static inline std::string trim_copy(std::string s) {
+[[maybe_unused]] inline std::string trim_copy(std::string s) {
     trim(s);
     return s;
 }
 
 #if __cplusplus >= 202002L
-static inline bool starts_with(std::string_view str, std::string_view prefix) {
-    return str.starts_with(prefix);
-}
-static inline bool ends_with(std::string_view str, std::string_view suffix) {
-    return str.ends_with(suffix);
-}
+static inline bool starts_with(std::string_view str, std::string_view prefix) { return str.starts_with(prefix); }
+static inline bool ends_with(std::string_view str, std::string_view suffix) { return str.ends_with(suffix); }
 #else
 static inline bool starts_with(const std::string &str, const std::string &prefix) {
     return str.substr(0, prefix.size()) == prefix;
@@ -110,7 +105,7 @@ Replace(std::string_view input, std::string_view oldS, std::string_view newS, ui
     for (std::string::size_type i = 0; i < n; i++) {
         auto pos = Index(in, oldS);
         if (pos == std::string::npos) {
-            s+= in;
+            s += in;
             return s;
         } else {
             s += in.substr(0, pos);
@@ -128,8 +123,9 @@ Replace(std::string_view input, std::string_view oldS, std::string_view newS, ui
  * @param n : only join the first n input strings
  * @return joint new string
  */
-[[maybe_unused]] inline std::string Join(std::vector<std::string> input, std::string_view sep, std::string::size_type n = 0) {
-    if(n == 0) {
+[[maybe_unused]] inline std::string
+Join(std::vector<std::string> input, std::string_view sep, std::string::size_type n = 0) {
+    if (n == 0) {
         n = input.size();
     }
     std::string s = input[0];
@@ -183,8 +179,9 @@ Replace(std::string_view input, std::string_view oldS, std::string_view newS, ui
  * @param newStr
  * @return
  */
-inline std::string ReplacePrefix(std::string_view input, std::string_view prefix, std::string_view newStr) {
-    if(!HasPrefix(input, prefix)) {
+[[maybe_unused]] inline std::string
+ReplacePrefix(std::string_view input, std::string_view prefix, std::string_view newStr) {
+    if (!HasPrefix(input, prefix)) {
         return std::string(input);
     } else {
         return std::string(newStr) + std::string(input.substr(prefix.size()));
@@ -198,8 +195,9 @@ inline std::string ReplacePrefix(std::string_view input, std::string_view prefix
  * @param newStr
  * @return
  */
-inline std::string ReplaceSuffix(std::string_view input, std::string_view suffix, std::string_view newStr) {
-    if(!HasSuffix(input, suffix)) {
+[[maybe_unused]] inline std::string
+ReplaceSuffix(std::string_view input, std::string_view suffix, std::string_view newStr) {
+    if (!HasSuffix(input, suffix)) {
         return std::string(input);
     } else {
         return std::string(input.substr(0, input.size() - suffix.size())) + std::string(newStr);
@@ -237,20 +235,21 @@ inline std::string::size_type Index(std::string_view input, std::string_view sep
  * @param N : maximum number of substrings to return
  * @return
  */
-[[maybe_unused]] std::vector<std::string> SplitAny(std::string_view input, const std::string_view &cutset, uint32_t N = UINT_MAX) {
+[[maybe_unused]] std::vector<std::string>
+SplitAny(std::string_view input, const std::string_view &cutset, uint32_t N = UINT_MAX) {
 
     std::vector<std::string> ret;
     if (N == 0) {
         return ret;
     }
-    if(N==1) {
+    if (N == 1) {
         ret.resize(1);
         ret[0] = input;
         return ret;
     }
 
     if (cutset.empty()) {
-        uint32_t maxSize = std::min((uint32_t)input.size() , N);
+        uint32_t maxSize = std::min((uint32_t)input.size(), N);
         ret.resize(maxSize);
         for (std::string::size_type i = 0; i < maxSize; i++) {
             if (i == maxSize - 1) {
@@ -266,7 +265,7 @@ inline std::string::size_type Index(std::string_view input, std::string_view sep
     std::string_view in = input.substr(start);
 
     for (std::string::size_type i = 0; i < N - 1; i++) {
-        if(in.empty()) {
+        if (in.empty()) {
             return ret;
         }
         std::string::size_type cur = in.find_first_of(cutset);
@@ -304,8 +303,8 @@ inline std::string::size_type Index(std::string_view input, std::string_view sep
         in = in.substr(sep.size());
     }
 
-    for(std::string::size_type i = 0; i < N; i++) {
-        if(in.empty()) {
+    for (std::string::size_type i = 0; i < N; i++) {
+        if (in.empty()) {
             return ret;
         }
         std::string::size_type cur = Index(in, sep);
@@ -369,8 +368,7 @@ inline std::string_view TrimLeft(std::string_view input, std::string_view cutset
  * @param func : function to test if a char should be removed
  * @return trimmed string
  */
-[[maybe_unused]] inline std::string_view
-TrimLeftFunc(std::string_view input, const std::function<bool(char)> &func) {
+[[maybe_unused]] inline std::string_view TrimLeftFunc(std::string_view input, const std::function<bool(char)> &func) {
     std::string::size_type first = 0;
     for (; first < input.size(); first++) {
         if (!func(input[first])) {
@@ -397,11 +395,10 @@ inline std::string_view TrimRight(std::string_view input, std::string_view cutse
  * @param func : func to tell whether a char need to be trimmed
  * @return trimmed string
  */
-[[maybe_unused]] inline std::string_view
-TrimRightFunc(std::string_view input, const std::function<bool(char)> &func) {
+[[maybe_unused]] inline std::string_view TrimRightFunc(std::string_view input, const std::function<bool(char)> &func) {
     int last = (int)input.size();
     for (; last >= 0; last--) {
-        if (!func(input[last-1])) {
+        if (!func(input[last - 1])) {
             break;
         }
     }
@@ -452,7 +449,6 @@ TrimRightFunc(std::string_view input, const std::function<bool(char)> &func) {
     return TrimRight(ret, spaceChars);
 }
 
-
-};
+} // namespace handycpp::string
 
 #endif // HANDYCPP_STRING_H
