@@ -48,5 +48,9 @@ int main() {
     assert( (int)(sw)s1 + 3 == 5);
     using namespace handycpp::dyntype::arithmetic;
     assert( 0 + s1 + 3 == 5);
+
+    auto ss = handycpp::string::Replace(s, "wo", "ni");
+    assert(s == "hello world");
+    assert(ss == "hello nirld");
     return 0;
 }

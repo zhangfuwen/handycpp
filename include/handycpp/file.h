@@ -137,7 +137,7 @@ static inline std::string readTextFile(std::string path) {
     return stream.str();
 }
 
-inline static int mkdir(const char * path, bool recursive = false) {
+inline static int mkdir(const char * path, [[maybe_unused]] bool recursive = false) {
 #if __cplusplus >= 201703L
     std::error_code ec;
     std::filesystem::create_directories(path, ec);
