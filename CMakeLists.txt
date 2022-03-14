@@ -4,7 +4,7 @@ project(handycpp VERSION 1.0.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0   -Werror=return-type -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type -fPIC")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
 include(ExternalProject)
 ExternalProject_Add(lodepng
