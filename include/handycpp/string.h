@@ -49,7 +49,7 @@ static inline std::string &rtrim(std::string &s) {
 }
 
 // for string delimiter
-std::vector<std::string> split (std::string s, std::string delimiter) {
+inline std::vector<std::string> split (std::string s, std::string delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
     std::vector<std::string> res;
@@ -251,7 +251,7 @@ inline std::string::size_type Index(std::string_view input, std::string_view sep
  * @param N : maximum number of substrings to return
  * @return
  */
-[[maybe_unused]] std::vector<std::string>
+[[maybe_unused]] inline std::vector<std::string>
 SplitAny(std::string_view input, const std::string_view &cutset, uint32_t N = UINT_MAX) {
 
     std::vector<std::string> ret;
@@ -304,7 +304,7 @@ SplitAny(std::string_view input, const std::string_view &cutset, uint32_t N = UI
  * @param N : maximum number of substrings to return
  * @return
  */
-[[maybe_unused]] std::vector<std::string> Split(std::string input, const std::string &sep, uint32_t N = UINT_MAX) {
+[[maybe_unused]] inline std::vector<std::string> Split(std::string input, const std::string &sep, uint32_t N = UINT_MAX) {
     std::vector<std::string> ret;
     if (sep.empty()) {
         ret.resize(input.size());
