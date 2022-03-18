@@ -22,7 +22,7 @@ ExternalProject_Add(lodepng
 add_library(${PROJECT_NAME} STATIC
         src/image.cpp
         )
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 add_dependencies(${PROJECT_NAME} lodepng)
 
 target_include_directories(
