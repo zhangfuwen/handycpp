@@ -8,17 +8,37 @@
 #include "handycpp/file.h"
 #include "handycpp/logging.h"
 #include <cstring>
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 namespace handycpp::image {
 
 struct rgba_data {
     unsigned width;
     unsigned height;
+    unsigned channels;
     std::vector<unsigned char> rgba_image;
 };
 
-[[maybe_unused]] rgba_data readPngAsRgba(const std::string &path);
+#ifdef STB_IMAGE_IMPLEMENTATION
+#include "handycpp/stb_image.h"
+[[maybe_unused]] inline rgba_data readPngAsRgba(const std::string &path) {
+    rgba_data data;
+    auto ret = stbi_load(path.c_str(), reinterpret_cast<int *>(&data.width), reinterpret_cast<int *>(&data.height),
+        reinterpret_cast<int *>(&data.channels), 0);
+    data.rgba_image.resize(data.width * data.height * data.channels);
+    memcpy(data.rgba_image.data(), ret, data.width * data.height * data.channels);
+    stbi_image_free(ret);
+    return data;
+}
+#endif
 
-[[maybe_unused]] int saveRgbaToPng(const std::string &outPath, const unsigned char *rgba, int w, int h);
+#ifdef STB_IMAGE_WRITE_IMPLEMENTATION
+#include "handycpp/stb_image_write.h"
+[[maybe_unused]] inline int saveRgbaToPng(const std::string &outPath, const unsigned char *rgba, int w, int h) {
+    return stbi_write_png(outPath.c_str(), w, h, 4, rgba, 4);
+}
+#endif
 
 [[maybe_unused]] static inline bool
 writeBmp(const std::string &outPath, const unsigned char *rgb, int w, int h, int pixel_stride = 3) {
