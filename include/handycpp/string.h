@@ -9,7 +9,26 @@
 #include <climits>
 #include <cmath>
 #include <string>
+#include <optional>
+#include <regex>
+#include <utility>
+
+#ifdef HAS_DOCTEST
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest/doctest.h"
+#endif
+
 namespace handycpp::string {
+
+/**
+ * test if a string contains another string
+ * @param self
+ * @param anotherStr
+ * @return
+ */
+static inline bool Contains(const std::string &self, const std::string & anotherStr) {
+    return self.find(anotherStr) != std::string::npos;
+}
 
 // trim from start (in place)
 static inline std::string &ltrim(std::string &s) {
@@ -49,7 +68,7 @@ static inline std::string &rtrim(std::string &s) {
 }
 
 // for string delimiter
-inline std::vector<std::string> split (std::string s, std::string delimiter) {
+inline std::vector<std::string> split (const std::string & s, const std::string & delimiter = " ") {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
     std::vector<std::string> res;
@@ -289,7 +308,7 @@ SplitAny(std::string_view input, const std::string_view &cutset, uint32_t N = UI
             ret.emplace_back(in);
             return ret;
         } else {
-            ret.emplace_back(input.substr(0, cur));
+            ret.emplace_back(in.substr(0, cur));
             in = in.substr(cur);
             in = in.substr(in.find_first_not_of(cutset));
         }
@@ -465,6 +484,370 @@ inline std::string_view TrimRight(std::string_view input, std::string_view cutse
     return TrimRight(ret, spaceChars);
 }
 
-} // namespace handycpp::string
+namespace pipe_operator {
 
+[[maybe_unused]] std::function<std::optional<std::string>(const std::string &)> grep(const std::string &pattern) {
+    return [&pattern](const std::string &input) -> std::optional<std::string> {
+        if (handycpp::string::Contains(input, pattern)) {
+            return input;
+        } else {
+            return std::nullopt;
+        }
+    };
+}
+
+[[maybe_unused]] std::function<std::optional<std::string>(const std::string &)>
+egrep(const std::string &regexStr, bool onlyMatch = false) {
+    return [&regexStr, &onlyMatch](const std::string &input) -> std::optional<std::string> {
+        std::smatch sm;
+        if (std::regex_search(input, sm, std::regex(regexStr))) {
+            if (onlyMatch) {
+                return sm[0];
+            } else {
+                return input;
+            }
+        }
+        return std::nullopt;
+    };
+}
+
+/********************** split like *************************************/
+class pipe_functor_split {
+public:
+    virtual std::vector<std::string> operator()(const std::string &) = 0;
+    virtual ~pipe_functor_split() = default;
+};
+
+inline static std::vector<std::string>
+operator|(const std::string &input, std::function<std::vector<std::string>(const std::string &)> &f) {
+    return f(input);
+}
+inline static std::vector<std::string>
+operator|(const std::string &input, std::function<std::vector<std::string>(const std::string &)> &&f) {
+    return f(input);
+}
+
+inline static std::vector<std::string> operator|(const std::string &input, pipe_functor_split &f) { return f(input); }
+
+class split_functor : public pipe_functor_split {
+public:
+    std::vector<std::string> operator()(const std::string &input) override {
+        return handycpp::string::SplitAny(input, " \t\v");
+    }
+};
+
+template <char cut> class [[maybe_unused]] splitby_functor : public pipe_functor_split {
+public:
+    std::vector<std::string> operator()(const std::string &input) override {
+        return handycpp::string::SplitAny(input, "" + cut);
+    }
+};
+
+inline split_functor split_;
+inline std::function<std::vector<std::string>(const std::string &)> split1 = split_;
+
+/************************************ join like ********************************************/
+class pipe_functor_join {
+public:
+    virtual std::string operator()(const std::vector<std::string> &) = 0;
+    virtual ~pipe_functor_join() = default;
+};
+inline static std::string
+operator|(const std::vector<std::string> &input, std::function<std::string(const std::vector<std::string> &)> &f) {
+    return f(input);
+}
+
+inline static std::string
+operator|(const std::vector<std::string> &input, std::function<std::string(const std::vector<std::string> &)> &&f) {
+    return f(input);
+}
+
+inline static std::string operator|(const std::vector<std::string> &input, pipe_functor_join &f) { return f(input); }
+
+class join_functor : public pipe_functor_join {
+public:
+    std::string operator()(const std::vector<std::string> &input) override { return handycpp::string::Join(input, ""); }
+};
+
+template <char cut> class joinby_functor : public pipe_functor_join {
+public:
+    std::string operator()(const std::vector<std::string> &input) override {
+        using namespace std::string_literals;
+        std::string s;
+        s.push_back(cut);
+        return handycpp::string::Join(input, s);
+    }
+};
+inline join_functor join;
+
+std::function<std::string(const std::vector<std::string> &inputs)> joinby(const std::string &sep) {
+    return [&sep](const std::vector<std::string> &inputs) -> std::string {
+        std::stringstream ret;
+        auto it = inputs.begin();
+        ret << *it;
+        it++;
+        while (it != inputs.end()) {
+            ret << sep << *it;
+            it++;
+        }
+        return ret.str();
+    };
+}
+
+/**************************** filter like *********************************/
+
+class pipe_functor_filter {
+public:
+    virtual std::vector<std::string> operator()(const std::vector<std::string> &) = 0;
+    virtual ~pipe_functor_filter() = default;
+};
+
+inline static std::vector<std::string> operator|(
+    std::vector<std::string> &&input,
+    std::function<std::vector<std::string>(const std::vector<std::string> &)> &f) {
+    return f(input);
+}
+inline static std::vector<std::string> operator|(
+    std::vector<std::string> &&input,
+    std::function<std::vector<std::string>(const std::vector<std::string> &)> &&f) {
+    return f(input);
+}
+inline static std::vector<std::string> operator|(
+    const std::vector<std::string> &input,
+    std::function<std::vector<std::string>(const std::vector<std::string> &)> &f) {
+    return f(input);
+}
+inline static std::vector<std::string> operator|(
+    const std::vector<std::string> &input,
+    std::function<std::vector<std::string>(const std::vector<std::string> &)> &&f) {
+    return f(input);
+}
+
+class filter_out : public pipe_functor_filter {
+public:
+    explicit filter_out(const std::string &s) { strs.insert(s); }
+    explicit filter_out(std::set<std::string> &strSet) { strs.swap(strSet); }
+    std::vector<std::string> operator()(const std::vector<std::string> &inputs) override {
+        std::vector<std::string> ret;
+        for (const auto &word : inputs) {
+            if (!strs.count(word)) {
+                ret.emplace_back(word);
+            }
+        }
+        return ret;
+    }
+
+private:
+    std::set<std::string> strs;
+};
+
+class foreach : public pipe_functor_filter {
+public:
+    explicit foreach(std::function<std::string(const std::string &)> f) : _f(std::move(f)) {}
+
+    std::vector<std::string> operator()(const std::vector<std::string> &inputs) override {
+        std::vector<std::string> ret;
+        for (const auto &word : inputs) {
+            ret.emplace_back(_f(word));
+        }
+        return ret;
+    }
+
+private:
+    std::function<std::string(const std::string &)> _f;
+};
+
+#ifdef HANDYCPP_TEST
+TEST_CASE("testing filter") {
+    using namespace handycpp::string::pipe_operator;
+    using namespace std::string_literals;
+    auto s = "hello world dean"s;
+    auto res = s | split1;
+    auto ret = res | filter_out("world");
+    CHECK(ret.size() == 2);
+    CHECK(ret[0] == "hello");
+    CHECK(ret[1] == "dean");
+
+    ret = s | split1 | [](const std::vector<std::string> & inputs) -> auto {
+      std::vector<std::string> ret;
+      for(const auto & word : inputs) {
+          ret.push_back("sss"s + word);
+      }
+      return ret;
+    };
+    CHECK(ret.size() == 3);
+    CHECK(ret[0] == "ssshello");
+    CHECK(ret[1] == "sssworld");
+    CHECK(ret[2] == "sssdean");
+}
+#endif
+
+/************************************* convert like *******************************************/
+
+class pipe_functor_convert {
+public:
+    virtual std::string operator()(const std::string &) = 0;
+    virtual ~pipe_functor_convert() = default;
+};
+inline static std::string operator|(const std::string &input, std::function<std::string(const std::string &)> &f) {
+    return f(input);
+}
+
+inline static std::string operator|(const std::string &input, std::function<std::string(const std::string &)> &&f) {
+    return f(input);
+}
+
+inline static std::string operator|(const std::string &input, pipe_functor_convert &&f) {
+    return f(input);
+}
+
+class append: public pipe_functor_convert {
+public:
+    [[maybe_unused]] explicit append(std::string suffix): suffix_(std::move(suffix)) {}
+
+    std::string operator() (const std::string & input) override {
+        return input + suffix_;
+    }
+
+private:
+    std::string suffix_;
+};
+
+class prepend: public pipe_functor_convert {
+public:
+    [[maybe_unused]] explicit prepend(std::string prefix): prefix_(std::move(prefix)) {}
+
+    std::string operator() (const std::string & input) override {
+        return prefix_ + input;
+    }
+
+private:
+    std::string prefix_;
+};
+
+#ifdef HANDYCPP_TEST
+TEST_CASE("testing pipe_convert") {
+    using namespace handycpp::string::pipe_operator;
+    using namespace std::string_literals;
+    auto ret = "hello world dean"s | split1 |  foreach(prepend("sss"));
+    CHECK(ret.size() == 3);
+    CHECK(ret[0] == "ssshello");
+    CHECK(ret[1] == "sssworld");
+    CHECK(ret[2] == "sssdean");
+
+    auto s = "hello world dean"s;
+    ret = s | split1 | foreach(append("sss"));
+    CHECK(ret.size() == 3);
+    CHECK(ret[0] == "hellosss");
+    CHECK(ret[1] == "worldsss");
+    CHECK(ret[2] == "deansss");
+
+}
+
+#endif
+
+/********************************** test like ******************************************/
+
+class pipe_functor_test {
+public:
+    virtual bool operator()(const std::string &) = 0;
+    virtual ~pipe_functor_test() = default;
+};
+
+//template <typename T>
+//inline static T operator|(const std::string &input, std::function<T(const std::string &)> &f) {
+//    return f(input);
+//}
+//
+//template <typename T>
+//inline static T operator|(const std::string &input, std::function<T(const std::string &)> &&f) {
+//    return f(input);
+//}
+
+
+template <typename F, typename T = std::result_of_t<F&(const std::string &)>>
+inline static
+T operator|(const std::string &input, F &f) {
+    return f(input);
+}
+
+template <typename F, typename T = std::result_of_t<F&(const std::string &)>>
+inline static
+T operator|(const std::string &input, F &&f) {
+    return f(input);
+}
+
+template <typename T>
+inline static T operator|(const std::vector<std::string> &inputs, std::function<T(const std::string &)> &f) {
+    return std::all_of(inputs.begin(), inputs.end(), f);
+}
+
+template <typename T>
+inline static T operator|(const std::vector<std::string> &inputs, std::function<T(const std::string &)> &&f) {
+    return std::all_of(inputs.begin(), inputs.end(), f);
+}
+
+
+bool all(const std::vector<std::string> &inputs, const std::function<bool(const std::string &)> &f) {
+    return std::all_of(inputs.begin(), inputs.end(), f);
+}
+
+bool any(const std::vector<std::string> &inputs, const std::function<bool(const std::string &)> &f) {
+    return std::any_of(inputs.begin(), inputs.end(), f);
+}
+
+struct x {
+    template <typename F, typename T = std::result_of_t<F&(const std::string &)>>
+    static std::enable_if_t<std::is_assignable_v<std::function<T(const std::string &)>, F>, T>
+    print(F f) {}
+
+    template <typename F, typename T = std::result_of_t<F&(const std::string &)>>
+    static T print2(F f) {}
+
+};
+
+#ifdef HANDYCPP_TEST
+TEST_CASE("testing pipe_operator") {
+    using namespace handycpp::string::pipe_operator;
+    using namespace std::string_literals;
+    auto s = "hello world dean"s;
+    auto ret = s | [](const std::string &word) { return word.empty(); };
+    CHECK(ret == false);
+    ret = s | [](const std::string &word) -> bool { return word.empty(); };
+    CHECK(ret == false);
+
+    ret = s | [](auto word) { return word.empty(); };
+    CHECK(ret == false);
+}
+#endif
+
+
+
+} // namespace handycpp::string::pipe_operator
+
+} // namespace handycpp::string
+#ifdef HANDYCPP_TEST
+TEST_CASE("testing pipe_operator") {
+    using namespace handycpp::string::pipe_operator;
+    using namespace std::string_literals;
+    auto s = "hello world dean"s;
+    auto words = "hello world"s | split1;
+    CHECK(words[0] == "hello");
+    CHECK(words[1] == "world");
+
+    words = s | split1;
+    CHECK(words[0] == "hello");
+    CHECK(words[1] == "world");
+    CHECK(words[2] == "dean");
+
+    auto line = words | join;
+    CHECK(line == "helloworlddean");
+    auto line2 = words | joinby_functor<','>();
+    CHECK(line2 == "hello,world,dean");
+    auto line3 = words | joinby(",,");
+    CHECK(line3 == "hello,,world,,dean");
+
+
+}
+#endif
 #endif // HANDYCPP_STRING_H

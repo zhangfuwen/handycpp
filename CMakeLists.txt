@@ -2,52 +2,59 @@ cmake_minimum_required(VERSION 3.10)
 
 project(handycpp VERSION 1.0.0 LANGUAGES CXX)
 
+###################### external projects ###########################################
+
+# doctest
+option(INCLUDE_DOCTEST "include doc test project" ON)
+include(FetchContent)
+#if(INCLUDE_DOCTEST)
+FetchContent_Populate(
+        doctest
+        GIT_REPOSITORY https://github.com/doctest/doctest
+        GIT_TAG        2.4.7
+        SOURCE_DIR     ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest
+)
+# end doctest
+
+
+################################# project ##################################################
 include(GNUInstallDirs)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type -fPIC")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
-include(ExternalProject)
-ExternalProject_Add(lodepng
-        GIT_REPOSITORY  https://github.com/lvandeve/lodepng
-        GIT_TAG master
-        SOURCE_DIR "${CMAKE_BINARY_DIR}/lodepng/src"
-        BINARY_DIR "${CMAKE_BINARY_DIR}/lodepng/build"
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-        TEST_COMMAND ""
-        )
-
-
-add_library(${PROJECT_NAME} STATIC
-        src/image.cpp
-        )
+add_library(${PROJECT_NAME} INTERFACE)
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
-add_dependencies(${PROJECT_NAME} lodepng)
-
-target_include_directories(
-        ${PROJECT_NAME}
-        INTERFACE
-        $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-        PRIVATE
-        ${CMAKE_BINARY_DIR}/lodepng/src/
-        include
+target_include_directories(${PROJECT_NAME} INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
 )
 
-# test
-option(TEST_ON "build and run test" OFF)
+if(INCLUDE_DOCTEST MATCHES ON)
+    target_include_directories(${PROJECT_NAME} INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
+    )
+    target_compile_definitions(${PROJECT_NAME} INTERFACE HAS_DOCTEST)
+    message(WARNING "doctest on")
+else()
+    message(WARNING "doctest off")
+endif(INCLUDE_DOCTEST MATCHES ON)
 
+########################################## test ######################################################
 
-if(TEST_ON)
-    add_executable(handycpp_test test/test.cpp)
-    target_include_directories(handycpp_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
-    target_compile_features(handycpp_test INTERFACE cxx_std_20)
-    target_compile_options(handycpp_test PRIVATE -Wall -Werror -Wextra -pedantic)
-    target_link_libraries(handycpp_test PRIVATE handycpp)
-endif()
+option(TEST_ON "build and run test" ON)
 
-# Install
+if(TEST_ON MATCHES ON)
+add_executable(handycpp_test test/test.cpp)
+target_compile_features(handycpp_test INTERFACE cxx_std_17)
+target_compile_options(handycpp_test PRIVATE -Wall -Werror -Wextra -pedantic)
+target_compile_definitions(handycpp_test PRIVATE HANDYCPP_TEST)
+target_link_libraries(handycpp_test PRIVATE ${PROJECT_NAME})
+message(WARNING "test on")
+else()
+message(WARNING "test off: ${TEST_ON}")
+endif(TEST_ON MATCHES ON)
+
+############################################# Install ##################################################
 install(TARGETS ${PROJECT_NAME}
         EXPORT ${PROJECT_NAME}_Targets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -73,3 +80,4 @@ install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+install(FILES ${doctest_SOURCE_DIR}/doctest/dectest.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/doctest/)
