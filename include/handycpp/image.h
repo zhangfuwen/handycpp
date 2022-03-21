@@ -9,8 +9,6 @@
 #include "handycpp/logging.h"
 #include <cstring>
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #pragma GCC diagnostic push
 
@@ -44,12 +42,16 @@ struct rgba_data {
     stbi_image_free(ret);
     return data;
 }
+#else
+[[maybe_unused]] inline rgba_data readPngAsRgba(const std::string &path);
 #endif
 
 #ifdef STB_IMAGE_WRITE_IMPLEMENTATION
 [[maybe_unused]] inline int saveRgbaToPng(const std::string &outPath, const unsigned char *rgba, int w, int h) {
     return stbi_write_png(outPath.c_str(), w, h, 4, rgba, 4);
 }
+#else
+[[maybe_unused]] inline int saveRgbaToPng(const std::string &outPath, const unsigned char *rgba, int w, int h);
 #endif
 
 [[maybe_unused]] static inline bool

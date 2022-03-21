@@ -12,6 +12,7 @@
 #include <optional>
 #include <regex>
 #include <utility>
+#include <set>
 
 #ifdef HAS_DOCTEST
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
@@ -540,7 +541,7 @@ public:
 };
 inline join_functor join;
 
-std::function<std::string(const std::vector<std::string> &inputs)> joinby(const std::string &sep) {
+inline std::function<std::string(const std::vector<std::string> &inputs)> joinby(const std::string &sep) {
     return [&sep](const std::vector<std::string> &inputs) -> std::string {
         std::stringstream ret;
         auto it = inputs.begin();
@@ -813,7 +814,7 @@ public:
     virtual ~pipe_functor_test() = default;
 };
 
-std::function<bool(const std::string &)> not_true(std::function<bool(const std::string &)> f) {
+inline std::function<bool(const std::string &)> not_true(std::function<bool(const std::string &)> f) {
     return [&f](const std::string & input) {
         return !f(input);
     };
@@ -986,7 +987,7 @@ TEST_CASE("testing pipe_operator") {
 
 /******************************************* regex ****************************************/
 
-[[maybe_unused]] std::function<std::optional<std::string>(const std::string &)> grep(const std::string &substr) {
+[[maybe_unused]] inline std::function<std::optional<std::string>(const std::string &)> grep(const std::string &substr) {
     return [&substr](const std::string &input) -> std::optional<std::string> {
         if (handycpp::string::Contains(input, substr)) {
             return input;
@@ -997,7 +998,7 @@ TEST_CASE("testing pipe_operator") {
 }
 
 [[maybe_unused]] std::function<std::optional<std::string>(const std::string &)>
-egrep(const std::string &regexStr, bool onlyMatch = false) {
+inline egrep(const std::string &regexStr, bool onlyMatch = false) {
     return [regexStr, onlyMatch](const std::string &input) -> std::optional<std::string> {
         std::smatch sm;
         if (std::regex_search(input, sm, std::regex(regexStr))) {
@@ -1012,7 +1013,7 @@ egrep(const std::string &regexStr, bool onlyMatch = false) {
 }
 
 [[maybe_unused]] std::function<std::vector<std::string>(const std::string &)>
-egrep_submatch(const std::string &regexStr) {
+inline egrep_submatch(const std::string &regexStr) {
     return [regexStr](const std::string &input) -> std::vector<std::string> {
       std::smatch sm;
       std::vector<std::string> submatch;
