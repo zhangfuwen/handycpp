@@ -11,6 +11,20 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#pragma GCC diagnostic push
+
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#ifdef STB_IMAGE_IMPLEMENTATION
+#include "handycpp/stb_image.h"
+#endif
+
+#ifdef STB_IMAGE_WRITE_IMPLEMENTATION
+#include "handycpp/stb_image_write.h"
+#endif
+
+#pragma GCC diagnostic pop
+
 namespace handycpp::image {
 
 struct rgba_data {
@@ -21,7 +35,6 @@ struct rgba_data {
 };
 
 #ifdef STB_IMAGE_IMPLEMENTATION
-#include "handycpp/stb_image.h"
 [[maybe_unused]] inline rgba_data readPngAsRgba(const std::string &path) {
     rgba_data data;
     auto ret = stbi_load(path.c_str(), reinterpret_cast<int *>(&data.width), reinterpret_cast<int *>(&data.height),
@@ -34,7 +47,6 @@ struct rgba_data {
 #endif
 
 #ifdef STB_IMAGE_WRITE_IMPLEMENTATION
-#include "handycpp/stb_image_write.h"
 [[maybe_unused]] inline int saveRgbaToPng(const std::string &outPath, const unsigned char *rgba, int w, int h) {
     return stbi_write_png(outPath.c_str(), w, h, 4, rgba, 4);
 }

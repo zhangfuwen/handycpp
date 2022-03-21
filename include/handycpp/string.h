@@ -471,31 +471,6 @@ inline std::string_view TrimRight(std::string_view input, std::string_view cutse
 
 namespace pipe_operator {
 
-[[maybe_unused]] std::function<std::optional<std::string>(const std::string &)> grep(const std::string &pattern) {
-    return [&pattern](const std::string &input) -> std::optional<std::string> {
-        if (handycpp::string::Contains(input, pattern)) {
-            return input;
-        } else {
-            return std::nullopt;
-        }
-    };
-}
-
-[[maybe_unused]] std::function<std::optional<std::string>(const std::string &)>
-egrep(const std::string &regexStr, bool onlyMatch = false) {
-    return [&regexStr, &onlyMatch](const std::string &input) -> std::optional<std::string> {
-        std::smatch sm;
-        if (std::regex_search(input, sm, std::regex(regexStr))) {
-            if (onlyMatch) {
-                return sm[0];
-            } else {
-                return input;
-            }
-        }
-        return std::nullopt;
-    };
-}
-
 /********************** split like *************************************/
 class pipe_functor_split {
 public:
@@ -642,6 +617,95 @@ private:
     std::function<std::string(const std::string &)> _f;
 };
 
+
+template<typename T>
+struct memfun_type2
+{
+    using type = void;
+    using input_type = void;
+};
+
+template<typename Ret, typename Input>
+struct memfun_type2<std::optional<Ret>(*)(const Input &)>
+{
+    using type = std::function<Ret(Input)>;
+    using ret_type = Ret;
+    using input_type = Input;
+};
+
+template<typename Ret, typename Class, typename Input>
+struct memfun_type2<std::optional<Ret>(Class::*)(const Input &) const>
+{
+    using type = std::function<Ret(Input)>;
+    using ret_type = Ret;
+    using input_type = Input;
+    using class_type = Class;
+};
+
+template<typename Ret, typename Input>
+struct memfun_type2<std::function<std::optional<Ret>(const Input &)>>
+{
+    using type = std::function<std::optional<Ret>(const Input &)>;
+    using ret_type = Ret;
+    using input_type = Input;
+};
+
+template<typename Ret, typename Class, typename Input>
+struct memfun_type2<std::optional<Ret>(Class::*)(const Input &)>
+{
+    using type = std::function<Ret(Input)>;
+    using ret_type = Ret;
+    using input_type = Input;
+    using class_type = Class;
+};
+
+
+template<typename F, typename Input = typename memfun_type2<decltype(&F::operator())>::input_type,
+    typename T = typename memfun_type2<decltype(&F::operator())>::ret_type
+>
+inline auto collect(F &&func) -> std::function<std::vector<T>(const std::vector<Input> & inputs)> {
+    return [func](const std::vector<Input> & inputs) -> std::vector<T> {
+        std::vector<T> ret;
+        for(const auto &input : inputs) {
+            std::optional<T> res = func(input);
+            if(res.has_value()) {
+                ret.push_back(res.value());
+            }
+        }
+        return ret;
+    };
+}
+
+template<typename Input, typename T>
+inline auto collect(std::function<std::optional<T>(const Input &)> func) -> std::function<std::vector<T>(const std::vector<Input> & inputs)> {
+    return [func](const std::vector<Input> & inputs) -> std::vector<T> {
+      std::vector<T> ret;
+      for(const auto &input : inputs) {
+          std::optional<T> res = func(input);
+          if(res.has_value()) {
+              ret.push_back(res.value());
+          }
+      }
+      return ret;
+    };
+}
+
+template<typename F, typename Input = typename memfun_type2<F*>::input_type,
+    typename T = typename memfun_type2<F*>::ret_type
+>
+inline auto collect(F *func) -> std::function<std::vector<T>(const std::vector<Input> & inputs)> {
+    return [func](const std::vector<Input> & inputs) -> std::vector<T> {
+      std::vector<T> ret;
+      for(const auto &input : inputs) {
+          std::optional<T> res = func(input);
+          if(res.has_value()) {
+              ret.push_back(res.value());
+          }
+      }
+      return ret;
+    };
+}
+
 #ifdef HANDYCPP_TEST
 TEST_CASE("testing filter") {
     using namespace handycpp::string::pipe_operator;
@@ -664,6 +728,16 @@ TEST_CASE("testing filter") {
     CHECK(ret[0] == "ssshello");
     CHECK(ret[1] == "sssworld");
     CHECK(ret[2] == "sssdean");
+
+    ret = s | split | collect([](const std::string & word) -> std::optional<std::string> {
+              if(word.find("l") != word.npos) {
+                  return word;
+              }
+              return std::nullopt;
+    });
+    CHECK(ret.size() == 2);
+    CHECK(ret[0] == "hello");
+    CHECK(ret[1] == "world");
 }
 #endif
 
@@ -907,12 +981,117 @@ TEST_CASE("testing pipe_operator") {
 
     ret = s | split | any(not_true(fptr));
     CHECK(ret == false);
-
-
 }
 #endif
 
+/******************************************* regex ****************************************/
 
+[[maybe_unused]] std::function<std::optional<std::string>(const std::string &)> grep(const std::string &substr) {
+    return [&substr](const std::string &input) -> std::optional<std::string> {
+        if (handycpp::string::Contains(input, substr)) {
+            return input;
+        } else {
+            return std::nullopt;
+        }
+    };
+}
+
+[[maybe_unused]] std::function<std::optional<std::string>(const std::string &)>
+egrep(const std::string &regexStr, bool onlyMatch = false) {
+    return [regexStr, onlyMatch](const std::string &input) -> std::optional<std::string> {
+        std::smatch sm;
+        if (std::regex_search(input, sm, std::regex(regexStr))) {
+            if (onlyMatch) {
+                return sm[0];
+            } else {
+                return input;
+            }
+        }
+        return std::nullopt;
+    };
+}
+
+[[maybe_unused]] std::function<std::vector<std::string>(const std::string &)>
+egrep_submatch(const std::string &regexStr) {
+    return [regexStr](const std::string &input) -> std::vector<std::string> {
+      std::smatch sm;
+      std::vector<std::string> submatch;
+      if (std::regex_search(input, sm, std::regex(regexStr))) {
+            for(const auto & i : sm) {
+                submatch.push_back(i);
+            }
+      }
+      return submatch;
+    };
+}
+
+#ifdef HANDYCPP_TEST
+TEST_CASE("testing regex") {
+    using namespace handycpp::string::pipe_operator;
+    using namespace std::string_literals;
+    {
+        auto s = "hello world dean"s;
+        auto ret = s | grep("world");
+        CHECK(ret.has_value() == true);
+        CHECK(ret.value() == s);
+
+        s = "hello well hell ok";
+        auto ret1 = s | split | collect(grep("ll"));
+        CHECK(ret1.size() == 3);
+        CHECK(ret1[0] == "hello");
+        CHECK(ret1[1] == "well");
+        CHECK(ret1[2] == "hell");
+
+        auto ret2 = s | split | collect(grep("ll")) | joinby(",");
+        CHECK(ret2 == "hello,well,hell");
+
+    }
+
+    {
+        auto test = [](std::string ip, std::string s= "") {
+            std::string str;
+            if(s.empty()) {
+                str = "(\\d{1,3})\\."
+                           "(\\d{1,3})\\."
+                           "(\\d{1,3})\\."
+                           "(\\d{1,3})";
+
+            } else {
+                str = s;
+            }
+          auto ret = ip | egrep(str);
+          CHECK(ret.has_value());
+          CHECK(ret.value() == ip);
+
+          auto ret1 = ip | egrep_submatch(str);
+          CHECK(ret1.size() == 5);
+          CHECK(ret1[0] == "192.168.1.10");
+          CHECK(ret1[1] == "192");
+          CHECK(ret1[2] == "168");
+            CHECK(ret1[3] == "1");
+            CHECK(ret1[4] == "10");
+        };
+        auto ip = "192.168.1.10";
+        auto ip2 = "xxad192.168.1.10as";
+        auto ip1 = "aasdf192.168.1.10ads192.168.1.11asd";
+        test(ip);
+        test(ip2);
+        test(ip1);
+
+        auto ip3 = "aasdf192.168.1.10ads192.168.2.11asd";
+        auto x = ip3 | egrep_submatch("^aa.*?(\\d{1,3})\\." // ? means non-gready here
+                  "(\\d{1,3})\\."
+                  "(\\d{1,3})\\."
+                  "(\\d{1,3})"
+                  "(.*$)");
+        CHECK(x.size() == 6);
+        CHECK(x[1] == "192");
+        CHECK(x[2] == "168");
+        CHECK(x[3] == "1");
+        CHECK(x[4] == "10");
+    }
+}
+#endif
 
 } // namespace handycpp::string::pipe_operator
 
