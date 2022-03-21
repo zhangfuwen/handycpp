@@ -67,21 +67,6 @@ static inline std::string &rtrim(std::string &s) {
     return s;
 }
 
-// for string delimiter
-inline std::vector<std::string> split (const std::string & s, const std::string & delimiter = " ") {
-    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
-    std::string token;
-    std::vector<std::string> res;
-
-    while ((pos_end = s.find (delimiter, pos_start)) != std::string::npos) {
-        token = s.substr (pos_start, pos_end - pos_start);
-        pos_start = pos_end + delim_len;
-        res.push_back (token);
-    }
-
-    res.push_back (s.substr (pos_start));
-    return res;
-}
 
 #if __cplusplus >= 202002L
 static inline bool starts_with(std::string_view str, std::string_view prefix) { return str.starts_with(prefix); }
@@ -271,7 +256,7 @@ inline std::string::size_type Index(std::string_view input, std::string_view sep
  * @return
  */
 [[maybe_unused]] inline std::vector<std::string>
-SplitAny(std::string_view input, const std::string_view &cutset, uint32_t N = UINT_MAX) {
+SplitAny(std::string_view input, const std::string_view &cutset = " ", uint32_t N = UINT_MAX) {
 
     std::vector<std::string> ret;
     if (N == 0) {
@@ -544,7 +529,7 @@ public:
 };
 
 inline split_functor split_;
-inline std::function<std::vector<std::string>(const std::string &)> split1 = split_;
+inline std::function<std::vector<std::string>(const std::string &)> split = split_;
 
 /************************************ join like ********************************************/
 class pipe_functor_join {
@@ -662,13 +647,13 @@ TEST_CASE("testing filter") {
     using namespace handycpp::string::pipe_operator;
     using namespace std::string_literals;
     auto s = "hello world dean"s;
-    auto res = s | split1;
+    auto res = s | split;
     auto ret = res | filter_out("world");
     CHECK(ret.size() == 2);
     CHECK(ret[0] == "hello");
     CHECK(ret[1] == "dean");
 
-    ret = s | split1 | [](const std::vector<std::string> & inputs) -> auto {
+    ret = s | split | [](const std::vector<std::string> & inputs) -> auto {
       std::vector<std::string> ret;
       for(const auto & word : inputs) {
           ret.push_back("sss"s + word);
@@ -729,14 +714,14 @@ private:
 TEST_CASE("testing pipe_convert") {
     using namespace handycpp::string::pipe_operator;
     using namespace std::string_literals;
-    auto ret = "hello world dean"s | split1 |  foreach(prepend("sss"));
+    auto ret = "hello world dean"s | split |  foreach(prepend("sss"));
     CHECK(ret.size() == 3);
     CHECK(ret[0] == "ssshello");
     CHECK(ret[1] == "sssworld");
     CHECK(ret[2] == "sssdean");
 
     auto s = "hello world dean"s;
-    ret = s | split1 | foreach(append("sss"));
+    ret = s | split | foreach(append("sss"));
     CHECK(ret.size() == 3);
     CHECK(ret[0] == "hellosss");
     CHECK(ret[1] == "worldsss");
@@ -754,26 +739,21 @@ public:
     virtual ~pipe_functor_test() = default;
 };
 
-//template <typename T>
-//inline static T operator|(const std::string &input, std::function<T(const std::string &)> &f) {
-//    return f(input);
-//}
-//
-//template <typename T>
-//inline static T operator|(const std::string &input, std::function<T(const std::string &)> &&f) {
-//    return f(input);
-//}
+std::function<bool(const std::string &)> not_true(std::function<bool(const std::string &)> f) {
+    return [&f](const std::string & input) {
+        return !f(input);
+    };
+}
 
-
-template <typename F, typename T = std::result_of_t<F&(const std::string &)>>
+template <typename Input, typename F, typename T = std::result_of_t<F&(Input)>>
 inline static
-T operator|(const std::string &input, F &f) {
+T operator|(Input input, F &f) {
     return f(input);
 }
 
-template <typename F, typename T = std::result_of_t<F&(const std::string &)>>
+template <typename Input, typename F, typename T = std::result_of_t<F&(Input)>>
 inline static
-T operator|(const std::string &input, F &&f) {
+T operator|(Input input, F &&f) {
     return f(input);
 }
 
@@ -787,26 +767,102 @@ inline static T operator|(const std::vector<std::string> &inputs, std::function<
     return std::all_of(inputs.begin(), inputs.end(), f);
 }
 
-
-bool all(const std::vector<std::string> &inputs, const std::function<bool(const std::string &)> &f) {
-    return std::all_of(inputs.begin(), inputs.end(), f);
-}
-
-bool any(const std::vector<std::string> &inputs, const std::function<bool(const std::string &)> &f) {
-    return std::any_of(inputs.begin(), inputs.end(), f);
-}
-
-struct x {
-    template <typename F, typename T = std::result_of_t<F&(const std::string &)>>
-    static std::enable_if_t<std::is_assignable_v<std::function<T(const std::string &)>, F>, T>
-    print(F f) {}
-
-    template <typename F, typename T = std::result_of_t<F&(const std::string &)>>
-    static T print2(F f) {}
-
+template<typename T>
+struct memfun_type
+{
+    using type = void;
 };
 
+template<typename Ret, typename Class, typename... Args>
+struct memfun_type<Ret(Class::*)(Args...) const>
+{
+    using type = std::function<Ret(Args...)>;
+};
+
+template<typename F>
+typename memfun_type<decltype(&F::operator())>::type
+to_function(F const &func)
+{ // Function from lambda !
+    return func;
+}
+
+template<typename T>
+struct memfun_type1
+{
+    using type = void;
+    using input_type = void;
+};
+
+template<typename Ret, typename Input>
+struct memfun_type1<Ret(*)(const Input &)>
+{
+    using type = std::function<Ret(Input)>;
+    using ret_type = Ret;
+    using input_type = Input;
+};
+
+template<typename Ret, typename Class, typename Input>
+struct memfun_type1<Ret(Class::*)(const Input &) const>
+{
+    using type = std::function<Ret(Input)>;
+    using ret_type = Ret;
+    using input_type = Input;
+    using class_type = Class;
+};
+template<typename Ret, typename Class, typename Input>
+struct memfun_type1<Ret(Class::*)(const Input &)>
+{
+    using type = std::function<Ret(Input)>;
+    using ret_type = Ret;
+    using input_type = Input;
+    using class_type = Class;
+};
+
+template<typename F, typename Input = typename memfun_type1<decltype(&F::operator())>::input_type,
+          typename T = typename memfun_type1<decltype(&F::operator())>::ret_type
+          >
+inline auto all(F &&func) -> std::function<T(const std::vector<Input> & inputs)> {
+    return [func](const std::vector<Input> & inputs) -> T {
+      return std::all_of(inputs.begin(), inputs.end(), func);
+    };
+}
+
+template<typename F, typename Input = typename memfun_type1<F*>::input_type,
+    typename T = typename memfun_type1<F*>::ret_type
+>
+inline auto all(F *func) -> std::function<T(const std::vector<Input> & inputs)> {
+    return [func](const std::vector<Input> & inputs) -> T {
+      return std::all_of(inputs.begin(), inputs.end(), func);
+    };
+}
+
+template<typename F, typename Input = typename memfun_type1<decltype(&F::operator())>::input_type,
+    typename T = typename memfun_type1<decltype(&F::operator())>::ret_type
+>
+inline auto any(F &&func) -> std::function<T(const std::vector<Input> & inputs)> {
+    return [func](const std::vector<Input> & inputs) -> T {
+      return std::any_of(inputs.begin(), inputs.end(), func);
+    };
+}
+
+template<typename F, typename Input = typename memfun_type1<F*>::input_type,
+    typename T = typename memfun_type1<F*>::ret_type
+>
+inline auto any(F *func) -> std::function<T(const std::vector<Input> & inputs)> {
+    return [func](const std::vector<Input> & inputs) -> T {
+      return std::any_of(inputs.begin(), inputs.end(), func);
+    };
+}
+
+
+
+
+
 #ifdef HANDYCPP_TEST
+
+bool test_word_size(const std::string & word) {
+    return word.size() >= 4;
+}
 TEST_CASE("testing pipe_operator") {
     using namespace handycpp::string::pipe_operator;
     using namespace std::string_literals;
@@ -818,6 +874,41 @@ TEST_CASE("testing pipe_operator") {
 
     ret = s | [](auto word) { return word.empty(); };
     CHECK(ret == false);
+
+    ret = s | split | all(to_function([](const std::string & word) { return word.size() == 5;}));
+    CHECK(ret == false);
+
+  auto f1 = all([](const std::string & word)-> bool { return word.size() >= 4;});
+    ret = s | split |  f1;
+    CHECK(ret == true);
+
+    ret = s | split | all([](const std::string & word)-> bool { return word.size() >= 4;});
+    CHECK(ret == true);
+
+    std::string capture="cap";
+    ret = s | split | all([&capture](const std::string & )-> bool { return capture.size() >= 4;});
+    CHECK(ret == false);
+
+    class functor {
+    public:
+        bool operator()(const std::string & word) {
+            return word.size() >= 4;
+        }
+    };
+    ret = s | split | all(functor());
+    CHECK(ret == true);
+
+    ret = s | split | all(test_word_size);
+    CHECK(ret == true);
+
+    decltype(test_word_size) * fptr = test_word_size;
+    ret = s | split | all(fptr);
+    CHECK(ret == true);
+
+    ret = s | split | any(not_true(fptr));
+    CHECK(ret == false);
+
+
 }
 #endif
 
@@ -831,11 +922,11 @@ TEST_CASE("testing pipe_operator") {
     using namespace handycpp::string::pipe_operator;
     using namespace std::string_literals;
     auto s = "hello world dean"s;
-    auto words = "hello world"s | split1;
+    auto words = "hello world"s | split;
     CHECK(words[0] == "hello");
     CHECK(words[1] == "world");
 
-    words = s | split1;
+    words = s | split;
     CHECK(words[0] == "hello");
     CHECK(words[1] == "world");
     CHECK(words[2] == "dean");
