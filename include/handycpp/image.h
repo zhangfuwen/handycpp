@@ -51,7 +51,7 @@ struct rgba_data {
 
 #ifdef STB_IMAGE_WRITE_IMPLEMENTATION
 [[maybe_unused]] int saveRgbaToPng(const std::string &outPath, const unsigned char *rgba, int w, int h) {
-    return stbi_write_png(outPath.c_str(), w, h, 4, rgba, 4);
+    return stbi_write_png(outPath.c_str(), w, h, 4, rgba, 4*w);
 }
 #else
 [[maybe_unused]] int saveRgbaToPng(const std::string &outPath, const unsigned char *rgba, int w, int h);
