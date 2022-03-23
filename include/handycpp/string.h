@@ -15,7 +15,7 @@
 #include <set>
 #include <sstream>
 
-#ifdef HAS_DOCTEST
+#ifdef HANDYCPP_TEST
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest/doctest.h"
 #endif
