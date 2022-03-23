@@ -8,11 +8,6 @@
 #include <cstdio>
 #include <memory>
 #include <string>
-
-static inline std::string exec(const std::string & cmd) {
-    return exec(cmd.c_str());
-}
-
 static inline std::string exec(const char *cmd) {
     std::array<char, 128> buffer{};
     std::string result;
@@ -24,5 +19,9 @@ static inline std::string exec(const char *cmd) {
         result += buffer.data();
     }
     return result;
+}
+
+static inline std::string exec(const std::string & cmd) {
+    return exec(cmd.c_str());
 }
 #endif // HANDYCPP_EXEC_H

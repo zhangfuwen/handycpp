@@ -53,33 +53,42 @@ struct mem_chunk {
  * for_each_line
  * @param filePath
  * @param lineOp
- *  lineOp(lineNumber, lineString)
+ *  lineOp(lineNumber, lineString) -> int return -1 will stop line iterating
  *  lineNumber is zero-based
  * @return
  *      return -1 on error, and errno is set
  *      return number of lines parsed
  */
-static inline int for_each_line(std::string filePath, std::function<void(int, std::string)> lineOp) {
-    std::ifstream input(filePath);
-    if (!input.good()) {
-        errno = ENOENT;
-        return -1;
+    static inline int for_each_line(std::string filePath, std::function<int(int, std::string)> lineOp) {
+        std::ifstream input(filePath);
+        if (!input.good()) {
+            errno = ENOENT;
+            return -1;
+        }
+        int i = 0;
+        for (std::string line; getline(input, line);) {
+            if(auto ret = lineOp(i, line); ret < 0) {
+                i++;
+                return i;
+            }
+            i++;
+        }
+        return i;
     }
-    int i = 0;
-    for (std::string line; getline(input, line);) {
-        lineOp(i, line);
-        i++;
-    }
-    return i;
-}
 
 static inline bool is_file_exist(const char *fileName) {
     std::ifstream infile(fileName);
     return infile.good();
 }
 
+#if __cplusplus >= 201703L && !defined(ANDROID)
+    return std::filesystem::is_directory(dirname);
+#else
+#include <sys/stat.h>
+#endif
+
 static inline bool is_dir_exist(const char *dirname) {
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L && !defined(ANDROID)
     return std::filesystem::is_directory(dirname);
 #else
     struct stat info;
@@ -94,6 +103,16 @@ static inline bool is_dir_exist(const char *dirname) {
 
     return (info.st_mode & S_IFDIR) ? 1 : 0;
 #endif
+}
+
+#include <string>
+#include <fstream>
+#include <streambuf>
+static inline std::string readText(std::string path) {
+    std::ifstream t(path);
+    std::string str((std::istreambuf_iterator<char>(t)),
+                    std::istreambuf_iterator<char>());
+    return str;
 }
 
 static inline mem_chunk readFile(std::string path, size_t size = 0) {
@@ -121,6 +140,7 @@ static inline std::string readTextFile(std::string path) {
     int ret = for_each_line(path, [&stream](int n, std::string line) {
         (void)n;
         stream << line;
+        return 0;
     });
     if (ret < 0) {
         return "";
@@ -128,12 +148,24 @@ static inline std::string readTextFile(std::string path) {
     return stream.str();
 }
 
-inline static int mkdir(const char *path, [[maybe_unused]] bool recursive = false) {
-#if __cplusplus >= 201703L
+#if defined(ANDROID)
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
+inline static int create_dir(const char *path, [[maybe_unused]] bool recursive = false) {
+#if __cplusplus >= 201703L && !defined(ANDROID)
     std::error_code ec;
     std::filesystem::create_directories(path, ec);
     return ec.value();
 #else
+
+    struct stat st = {0};
+
+    if (stat("/some/directory", &st) == -1) {
+       mkdir("/some/directory", 0700);
+    }
     return -1; // not implemented, :)
 #endif
 }
@@ -144,7 +176,7 @@ static inline bool saveFile(char *data, int size, const std::string &filename = 
     std::string dir(dirname(filename_dump));
     free(filename_dump);
     if (!is_dir_exist(dir.c_str()) && createdir) {
-        auto ret = mkdir(dir.c_str());
+        auto ret = create_dir(dir.c_str());
         if (ret != 0) {
             return false;
         }
