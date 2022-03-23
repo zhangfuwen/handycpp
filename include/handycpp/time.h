@@ -16,19 +16,22 @@ class timer {
 
 public:
     template<typename T>
-    void setTimeout(T function, int delay);
+    void setTimeout(T function, int delay_ms);
     template<typename T>
-    void setInterval(T function, int interval);
+    void setInterval(T function, int inverval_ms);
+
+    template <class T> void setTimeout(T function, std::chrono::duration<int> delay);
+    template <class T> void setInterval(T function, std::chrono::duration<int> inverval);
     void stop();
 
 };
 
 template<typename T>
-void timer::setTimeout(T function, int delay) {
+void timer::setTimeout(T function, int delay_ms) {
     this->clear = false;
     std::thread t([=]() {
         if (this->clear) return;
-        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
         if (this->clear) return;
         function();
     });
@@ -36,15 +39,41 @@ void timer::setTimeout(T function, int delay) {
 }
 
 template<typename T>
-void timer::setInterval(T function, int interval) {
+void timer::setInterval(T function, int inverval_ms) {
     this->clear = false;
     std::thread t([=]() {
         while (true) {
             if (this->clear) return;
-            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+            std::this_thread::sleep_for(std::chrono::milliseconds(inverval_ms));
             if (this->clear) return;
             function();
         }
+    });
+    t.detach();
+}
+
+template<typename T>
+void timer::setTimeout(T function, std::chrono::duration<int> delay) {
+    this->clear = false;
+    std::thread t([=]() {
+      if (this->clear) return;
+      std::this_thread::sleep_for(delay);
+      if (this->clear) return;
+      function();
+    });
+    t.detach();
+}
+
+template<typename T>
+void timer::setInterval(T function, std::chrono::duration<int> inverval) {
+    this->clear = false;
+    std::thread t([=]() {
+      while (true) {
+          if (this->clear) return;
+          std::this_thread::sleep_for(std::chrono::milliseconds(inverval));
+          if (this->clear) return;
+          function();
+      }
     });
     t.detach();
 }
