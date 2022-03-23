@@ -20,8 +20,10 @@ public:
     template<typename T>
     void setInterval(T function, int inverval_ms);
 
-    template <class T> void setTimeout(T function, std::chrono::duration<int> delay);
-    template <class T> void setInterval(T function, std::chrono::duration<int> inverval);
+    template<typename T, typename Rep, typename Period>
+    void setTimeout(T function, std::chrono::duration<int> delay);
+    template<typename T, typename Rep, typename Period>
+    void setInterval(T function, std::chrono::duration<int> inverval);
     void stop();
 
 };
@@ -52,8 +54,8 @@ void timer::setInterval(T function, int inverval_ms) {
     t.detach();
 }
 
-template<typename T>
-void timer::setTimeout(T function, std::chrono::duration<int> delay) {
+template<typename T, typename Rep, typename Period>
+void timer::setTimeout(T function, std::chrono::duration<Rep, Period> delay) {
     this->clear = false;
     std::thread t([=]() {
       if (this->clear) return;
@@ -64,7 +66,7 @@ void timer::setTimeout(T function, std::chrono::duration<int> delay) {
     t.detach();
 }
 
-template<typename T>
+template<typename T, typename Rep, typename Period>
 void timer::setInterval(T function, std::chrono::duration<int> inverval) {
     this->clear = false;
     std::thread t([=]() {
