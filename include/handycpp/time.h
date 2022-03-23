@@ -67,7 +67,7 @@ void timer::setTimeout(T function, std::chrono::duration<Rep, Period> delay) {
 }
 
 template<typename T, typename Rep, typename Period>
-void timer::setInterval(T function, std::chrono::duration<int> inverval) {
+void timer::setInterval(T function, std::chrono::duration<Rep, Period> inverval) {
     this->clear = false;
     std::thread t([=]() {
       while (true) {
