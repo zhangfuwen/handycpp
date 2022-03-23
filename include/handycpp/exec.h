@@ -9,6 +9,10 @@
 #include <memory>
 #include <string>
 
+static inline std::string exec(const std::string & cmd) {
+    return exec(cmd.c_str());
+}
+
 static inline std::string exec(const char *cmd) {
     std::array<char, 128> buffer{};
     std::string result;

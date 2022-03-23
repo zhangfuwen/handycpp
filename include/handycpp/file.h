@@ -53,8 +53,8 @@ struct mem_chunk {
  * for_each_line
  * @param filePath
  * @param lineOp
-//  lineOp(lineNumber, lineString)
-//  lineNumber is zero-based
+ *  lineOp(lineNumber, lineString)
+ *  lineNumber is zero-based
  * @return
  *      return -1 on error, and errno is set
  *      return number of lines parsed
