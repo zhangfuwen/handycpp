@@ -13,6 +13,7 @@
 #include <regex>
 #include <utility>
 #include <set>
+#include <sstream>
 
 #ifdef HAS_DOCTEST
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
@@ -497,14 +498,17 @@ public:
     }
 };
 
-template <char cut> class [[maybe_unused]] splitby_functor : public pipe_functor_split {
+class [[maybe_unused]] splitby: public pipe_functor_split {
 public:
+    splitby(std::string cutset) : cutset_(cutset) {}
     std::vector<std::string> operator()(const std::string &input) override {
-        return handycpp::string::SplitAny(input, "" + cut);
+        return handycpp::string::SplitAny(input, cutset_);
     }
+private:
+    std::string cutset_;
 };
 
-inline split_functor split_;
+inline splitby split_(" ");
 inline std::function<std::vector<std::string>(const std::string &)> split = split_;
 
 /************************************ join like ********************************************/
