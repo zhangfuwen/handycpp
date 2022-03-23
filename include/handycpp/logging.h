@@ -16,7 +16,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#if __cplusplus > 201703L
+#if __cplusplus >= 201703L
 constexpr std::string_view trim_filename(std::string_view path) { return path.substr(path.find_last_of("/\\") + 1); }
 #else
 static inline std::string trim_filename(std::string path) { return path.substr(path.find_last_of("/\\") + 1); }
