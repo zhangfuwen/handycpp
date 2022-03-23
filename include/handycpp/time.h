@@ -21,9 +21,9 @@ public:
     void setInterval(T function, int inverval_ms);
 
     template<typename T, typename Rep, typename Period>
-    void setTimeout(T function, std::chrono::duration<int> delay);
+    void setTimeout(T function, std::chrono::duration<Rep, Period> delay);
     template<typename T, typename Rep, typename Period>
-    void setInterval(T function, std::chrono::duration<int> inverval);
+    void setInterval(T function, std::chrono::duration<Rep, Period> inverval);
     void stop();
 
 };
