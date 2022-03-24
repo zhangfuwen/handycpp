@@ -6,12 +6,54 @@
 #define HANDYCPP_TIME_H
 
 #include <chrono>
+#include <cstring>
 #include <iostream>
+#include <string>
 #include <thread>
 
 namespace handycpp::time {
 
+inline double mono_clock_now() {
+    struct timespec time1 = {0, 0};
+    clock_gettime(CLOCK_MONOTONIC, &time1);
+    return (double)time1.tv_sec + (double)time1.tv_nsec / 1000000000;
+}
+#define NANO 1000000000L
 
+namespace {
+// buf needs to store 30 characters
+inline int timespec2str(char *buf, uint len, struct timespec *ts) {
+    int ret;
+    struct tm t;
+
+    tzset();
+    if (localtime_r(&(ts->tv_sec), &t) == NULL)
+        return 1;
+
+    ret = strftime(buf, len, "%F %T", &t);
+    if (ret == 0)
+        return 2;
+    len -= ret - 1;
+
+    ret = snprintf(&buf[strlen(buf)], len, ".%09ld", ts->tv_nsec);
+    if (ret >= (int)len)
+        return 3;
+
+    return 0;
+}
+} // namespace
+
+inline std::string wall_clock_now() {
+    struct timespec time1 = {0, 0};
+    clock_gettime(CLOCK_MONOTONIC, &time1);
+
+    std::string ret = "2012-12-31 12:59:59.123456789";
+    if (timespec2str(ret.data(), ret.size() + 1, &time1) != 0) {
+        return "";
+    } else {
+        return ret;
+    }
+}
 
 class timer {
     volatile bool clear = false;
@@ -174,11 +216,9 @@ inline int64_t MeasureCyclesPerSecond(int timeout_ms) {
     int64_t t[2];
     t[0] = Now();
     handycpp::time::timer timer;
-    timer.setTimeout([&t]() {
-        t[1] = Now();
-    }, timeout_ms);
+    timer.setTimeout([&t]() { t[1] = Now(); }, timeout_ms);
 
-    while(!timer.stopped()) {
+    while (!timer.stopped()) {
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(10ms);
     }
