@@ -82,7 +82,7 @@ static inline bool is_file_exist(const char *fileName) {
 }
 
 #if __cplusplus >= 201703L && !defined(ANDROID)
-    return std::filesystem::is_directory(dirname);
+
 #else
 #include <sys/stat.h>
 #endif
