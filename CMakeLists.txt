@@ -41,7 +41,7 @@ endif(INCLUDE_DOCTEST MATCHES ON)
 
 ########################################## test ######################################################
 
-option(TEST_ON "build and run test" ON)
+option(TEST_ON "build and run test" OFF)
 
 if(TEST_ON MATCHES ON)
 add_executable(handycpp_test test/test.cpp)
