@@ -15,7 +15,6 @@
 #include <utility>
 #include <vector>
 
-#include "handycpp/logging.h"
 #if __cplusplus >= 201703L
 #include <filesystem>
 #else
@@ -175,7 +174,6 @@ inline static int create_dir([[maybe_unused]] const char *path, [[maybe_unused]]
 }
 
 static inline bool saveFile(char *data, int size, const std::string &filename = "", bool createdir = false) {
-    FUN_DEBUG("filepath %s", filename.c_str());
     auto filename_dump = strdup(filename.c_str());
     std::string dir(dirname(filename_dump));
     free(filename_dump);
@@ -189,7 +187,6 @@ static inline bool saveFile(char *data, int size, const std::string &filename = 
     std::ofstream myfile;
     myfile.open(filename);
     if (!myfile.is_open()) {
-        FUN_ERROR("failed to open file %s", filename.c_str());
         return false;
     }
     myfile.write(data, size);
