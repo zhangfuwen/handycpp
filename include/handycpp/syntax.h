@@ -31,7 +31,19 @@ struct defer {
 private:
     std::function<void (void)> f_;
 };
-
+#ifdef HANDYCPP_TEST
+TEST_CASE("handycpp::syntax::defer") {
+    int i;
+    {
+        i = 0;
+        defer dt([&]() {
+            i++;
+        });
+        i=5;
+    }
+    CHECK(i==6);
+}
+#endif
 }
 
 

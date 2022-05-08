@@ -11,11 +11,16 @@
 #include <ctime>
 #include <fcntl.h>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <syslog.h>
 #include <unistd.h>
 #include <utility>
+#ifdef HANDYCPP_TEST
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest/doctest.h"
+#endif
 
 #if __cplusplus >= 201703L
 constexpr std::string_view trim_filename(std::string_view path) { return path.substr(path.find_last_of("/\\") + 1); }
@@ -41,11 +46,19 @@ template <typename... Args> std::string log_format(const std::string &format, Ar
     std::snprintf(buf.get(), size, format.c_str(), args...);
     return std::string{buf.get(), buf.get() + size - 1}; // We don't want the '\0' inside
 }
+template<>
+std::string log_format(const std::string &fmt)
+{
+    return fmt;
+}
 
-namespace { // hidden
 inline int g_level = 0;
-inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *text) { printf("%s\n", text); };
-} // namespace
+inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *text) {
+    (void)level;
+    (void)tag;
+    printf("%s\n", text);
+};
+
 /**
  * set log writer
  * @param func void (int level, const char * tag, const char *text)
@@ -55,7 +68,7 @@ inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *tex
 } // end namespace handycpp::logging
 
 #ifndef FUN_PRINT
-#define FUN_PRINT(fmt, ...) g_logWrite(0, "", log_format(fmt, __VA_ARGS__))
+#define FUN_PRINT(fmt, ...) handycpp::logging::g_logWrite(0, "", handycpp::logging::log_format(fmt, __VA_ARGS__).c_str())
 #endif
 
 #define FUN_INFO(fmt, ...)                                                                                             \
@@ -134,6 +147,21 @@ inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *tex
 #undef FUN_DEBUG
 #define FUN_DEBUG(fmt, ...)
 #define FUN_TRACE(fmt, ...)
+#endif
+
+#ifdef HANDYCPP_TEST
+#include <handycpp/string.h>
+TEST_CASE("handycpp::logging") {
+    std::string res;
+    handycpp::logging::SetLogWritter([&](int level, const char *tag, const char *msg) {
+        (void)level;
+        (void)tag;
+        res = msg;
+    });
+    FUN_INFO("hi %d", 5);
+    CHECK(handycpp::string::ends_with(res, "hi 5"));
+
+}
 #endif
 
 #endif // HANDYCPP_LOGGING_H

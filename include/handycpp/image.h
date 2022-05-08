@@ -104,7 +104,6 @@ writeBmp(const std::string &outPath, const unsigned char *rgb, int w, int h, int
     }
     f = fopen(outPath.c_str(), "w+");
     if (f == nullptr) {
-        auto err = errno;
         free(img);
         return false;
     }

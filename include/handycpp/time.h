@@ -75,6 +75,7 @@ inline timespec operator+(const timespec& lhs, const timespec& rhs) {
 
 
 
+
 namespace {
 // buf needs to store 30 characters
 inline int timespec2str(char *buf, uint len, struct timespec *ts) {
@@ -130,6 +131,33 @@ inline std::string timespec_ms(const timespec & t, char sep = ' ') {
     snprintf(buf, 50, "%lu%c%03lu", t.tv_sec, sep, t.tv_nsec/1000'000);
     return buf;
 }
+
+#ifdef HANDYCPP_TEST
+TEST_CASE("handycpp::time::timespec") {
+    timespec t1, t2;
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    clock_gettime(CLOCK_MONOTONIC, &t2);
+    CHECK(t1 == t1);
+    CHECK(t2 > t1);
+    CHECK(t1 < t2);
+    timespec t3;
+    t3.tv_sec = 1;
+    t3.tv_nsec = 0;
+    CHECK(t1 + t3 > t2);
+    CHECK(t2 - t3 < t1);
+    t3.tv_sec = 1;
+    t3.tv_nsec = 123456789;
+    using namespace std::string_literals;
+    CHECK(timespec_ns(t3) == "1 123456789"s);
+    CHECK(timespec_us(t3) == "1 123456"s);
+    CHECK(timespec_ms(t3) == "1 123"s);
+    t3.tv_nsec = 456789;
+    CHECK(timespec_ns(t3) == "1 000456789"s);
+    CHECK(timespec_us(t3) == "1 000456"s);
+    CHECK(timespec_ms(t3) == "1 000"s);
+
+}
+#endif
 
 /**
  * wall clock time to string

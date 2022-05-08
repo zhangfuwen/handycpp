@@ -3,13 +3,8 @@
 //
 
 #include <cassert>
-#include "handycpp/file.h"
-#include "handycpp/logging.h"
-#include "handycpp/string.h"
-#include "handycpp/exec.h"
-#include "handycpp/image.h"
-#include "handycpp/dyntype.h"
 #include <string>
+#include "handycpp/almost_all.h"
 
 using namespace handycpp::dyntype::concat;
 using namespace handycpp::dyntype::arithmetic;

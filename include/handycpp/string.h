@@ -37,15 +37,32 @@ namespace handycpp::string {
  * @return return formated string
  */
 template<typename ... Args>
-std::string format( const std::string& format, Args ... args )
+std::string format( const std::string& fmt, Args ... args )
 {
-    int size_s = std::snprintf( nullptr, 0, format.c_str(), args ... ) + 1; // Extra space for '\0'
+    int size_s = std::snprintf( nullptr, 0, fmt.c_str(), args ... ) + 1; // Extra space for '\0'
     if( size_s <= 0 ){ throw std::runtime_error( "Error during formatting." ); }
     auto size = static_cast<size_t>( size_s );
     std::unique_ptr<char[]> buf( new char[ size ] );
-    std::snprintf( buf.get(), size, format.c_str(), args ... );
-    return std::string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
+    std::snprintf( buf.get(), size, fmt.c_str(), args ... );
+    auto ret = std::string{ buf.get(), buf.get() + size - 1 }; // We don't want the '\0' inside
+    return ret;
 }
+
+template<>
+std::string format(const std::string &fmt)
+{
+    return fmt;
+}
+
+#ifdef HANDYCPP_TEST
+TEST_CASE("handycpp::string::format") {
+    auto ret  = format("a%c %d %d %.3f", 'a', 1, 2,  3.567000);
+    using namespace std::string_literals;
+    CHECK(ret == "aa 1 2 3.567"s);
+    CHECK("ok"s == format("ok"));
+    CHECK(format("").empty());
+}
+#endif
 
 /**
  * test if a string contains another string
