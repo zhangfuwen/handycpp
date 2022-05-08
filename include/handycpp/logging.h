@@ -64,7 +64,7 @@ inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *tex
  * @param func void (int level, const char * tag, const char *text)
  */
 [[maybe_unused]] inline void SetLogWritter(LogWriterFunc func) { g_logWrite = std::move(func); }
-[[maybe_unused]] inline void SetLogLevel(int level) { g_level = level; };
+[[maybe_unused]] inline void SetLogLevel(int level) { g_level = level; }
 } // end namespace handycpp::logging
 
 #ifndef FUN_PRINT
