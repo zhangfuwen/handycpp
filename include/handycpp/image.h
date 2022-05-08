@@ -6,7 +6,6 @@
 #define HANDYCPP_IMAGE_H
 
 #include "handycpp/file.h"
-#include "handycpp/logging.h"
 #include <cstring>
 
 //#define STB_IMAGE_IMPLEMENTATION
@@ -64,7 +63,6 @@ writeBmp(const std::string &outPath, const unsigned char *rgb, int w, int h, int
 
     auto img = (unsigned char *)malloc(3 * w * h);
     if (img == nullptr) {
-        FUN_ERROR("failed to malloc, size %d", 3 * w * h);
         return false;
     }
     memset(img, 0, 3 * w * h);
@@ -107,7 +105,6 @@ writeBmp(const std::string &outPath, const unsigned char *rgb, int w, int h, int
     f = fopen(outPath.c_str(), "w+");
     if (f == nullptr) {
         auto err = errno;
-        FUN_ERROR("filed to open %s, %s", outPath.c_str(), strerror(err));
         free(img);
         return false;
     }

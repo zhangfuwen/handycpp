@@ -13,12 +13,67 @@
 
 namespace handycpp::time {
 
+/**
+ * @deprecated
+ * @return
+ */
 inline double mono_clock_now() {
     struct timespec time1 = {0, 0};
     clock_gettime(CLOCK_MONOTONIC, &time1);
     return (double)time1.tv_sec + (double)time1.tv_nsec / 1000000000;
 }
-#define NANO 1000000000L
+#define NANO 1'000'000'000L
+
+inline bool operator <(const timespec& lhs, const timespec& rhs)
+{
+    if (lhs.tv_sec == rhs.tv_sec)
+        return lhs.tv_nsec < rhs.tv_nsec;
+    else
+        return lhs.tv_sec < rhs.tv_sec;
+}
+inline bool operator ==(const timespec& lhs, const timespec& rhs)
+{
+    return lhs.tv_sec == rhs.tv_sec && lhs.tv_nsec == rhs.tv_nsec;
+}
+inline bool operator >(const timespec& lhs, const timespec& rhs)
+{
+    if (lhs.tv_sec == rhs.tv_sec)
+        return lhs.tv_nsec > rhs.tv_nsec;
+    else
+        return lhs.tv_sec > rhs.tv_sec;
+}
+
+/**
+ * lhs must be greater than or equal to rhs, otherwise all returned fields will be set zero.
+ * @param lhs
+ * @param rhs
+ * @return
+ */
+inline timespec operator-(const timespec& lhs, const timespec& rhs) {
+    timespec ret;
+    if(lhs.tv_nsec > rhs.tv_nsec) {
+        ret.tv_sec = lhs.tv_sec - rhs.tv_sec;
+        ret.tv_nsec = lhs.tv_nsec - rhs.tv_nsec;
+    } else {
+        ret.tv_nsec = lhs.tv_nsec + 1'000'000'000 - rhs.tv_nsec;
+        ret.tv_sec = lhs.tv_sec -1 - rhs.tv_nsec;
+    }
+    return ret;
+}
+
+inline timespec operator+(const timespec& lhs, const timespec& rhs) {
+    timespec ret;
+    if(1'000'000'000 - lhs.tv_nsec > rhs.tv_nsec) {
+         ret.tv_sec = lhs.tv_sec + rhs.tv_sec + 1;
+         ret.tv_nsec = lhs.tv_nsec + rhs.tv_nsec - 1'000'000'000;
+    } else {
+        ret.tv_sec = lhs.tv_sec + rhs.tv_sec;
+        ret.tv_nsec = lhs.tv_nsec + rhs.tv_nsec;
+    }
+    return ret;
+}
+
+
 
 namespace {
 // buf needs to store 30 characters
@@ -43,6 +98,44 @@ inline int timespec2str(char *buf, uint len, struct timespec *ts) {
 }
 } // namespace
 
+/**
+ * return string like [1234556 000456789], without brackets
+ * @param t
+ * @return
+ */
+inline std::string timespec_ns(const timespec & t, char sep = ' ') {
+    char buf[50]; // enough for two long long and ten chars
+    snprintf(buf, 50, "%lu%c%09lu", t.tv_sec, sep, t.tv_nsec);
+    return buf;
+}
+
+/**
+ * return string like [1234556 000456], without brackets
+ * @param t
+ * @return
+ */
+inline std::string timespec_us(const timespec & t, char sep = ' ') {
+    char buf[50]; // enough for two long long and ten chars
+    snprintf(buf, 50, "%lu%c%06lu", t.tv_sec, sep, t.tv_nsec/1000);
+    return buf;
+}
+
+/**
+ * return string like [1234556 023], without brackets
+ * @param t
+ * @return
+ */
+inline std::string timespec_ms(const timespec & t, char sep = ' ') {
+    char buf[50]; // enough for two long long and ten chars
+    snprintf(buf, 50, "%lu%c%03lu", t.tv_sec, sep, t.tv_nsec/1000'000);
+    return buf;
+}
+
+/**
+ * wall clock time to string
+ * @return
+ *    something like 2012-12-31 12:59:59.123456789;
+ */
 inline std::string wall_clock_now() {
     struct timespec time1 = {0, 0};
     clock_gettime(CLOCK_MONOTONIC, &time1);
@@ -55,6 +148,26 @@ inline std::string wall_clock_now() {
     }
 }
 
+/**
+ * @usage
+ *     Example:
+ *
+ * @code
+ *      timer t;
+ *      t.setTimeout([](){
+ *          printf("timeout\n");
+ *      }, 5000);
+ *
+ *      timer t2;
+ *      t2.setInterval([]() {
+ *          printf("triggered\n");
+ *      }, 1000);
+ *      sleep(10);
+ *      t2.stop();
+ *
+ *
+ *      in the above examples, t and t2 must not be destructed before timer expires or being stopped.
+ */
 class timer {
     volatile bool clear = false;
 
@@ -134,6 +247,11 @@ inline void timer::stop() { this->clear = true; }
 inline bool timer::stopped() { return this->clear = true; }
 
 namespace cycle_clock {
+
+/**
+ * get current time using cpu's high precision always on timer.
+ * @return return a number of timers ticks. to know how much time a time tick represents, use @link MeasureCyclesPerSecond
+ */
 inline int64_t Now() {
 #if defined(BENCHMARK_OS_MACOSX)
     return mach_absolute_time();
@@ -212,6 +330,13 @@ inline int64_t Now() {
 #endif
 }
 
+/**
+ * measure the number of ticks per second
+ *
+ * @param timeout_ms \n
+ *         how much time you want to use to measure, maybe a second, 5 seconds, etc.
+ * @return number of ticks per second
+ */
 inline int64_t MeasureCyclesPerSecond(int timeout_ms) {
     int64_t t[2];
     t[0] = Now();
