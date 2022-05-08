@@ -11,8 +11,8 @@ include(FetchContent)
 FetchContent_Populate(
         doctest
         GIT_REPOSITORY https://github.com/doctest/doctest
-        GIT_TAG        2.4.7
-        SOURCE_DIR     ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest
+        GIT_TAG 2.4.7
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest
 )
 # end doctest
 
@@ -24,35 +24,40 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type")
 add_library(${PROJECT_NAME} INTERFACE)
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 target_include_directories(${PROJECT_NAME} INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
-)
-
-if(INCLUDE_DOCTEST MATCHES ON)
-    target_include_directories(${PROJECT_NAME} INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
-    )
+        )
+
+if (INCLUDE_DOCTEST MATCHES ON)
+    target_include_directories(${PROJECT_NAME} INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
+            )
     target_compile_definitions(${PROJECT_NAME} INTERFACE HAS_DOCTEST)
     message(WARNING "doctest on")
-else()
+else ()
     message(WARNING "doctest off")
-endif(INCLUDE_DOCTEST MATCHES ON)
+endif (INCLUDE_DOCTEST MATCHES ON)
 
 ########################################## test ######################################################
 
 option(TEST_ON "build and run test" OFF)
 
-if(TEST_ON MATCHES ON)
-add_executable(handycpp_test test/test.cpp)
-target_compile_features(handycpp_test INTERFACE cxx_std_17)
-target_compile_options(handycpp_test PRIVATE -Wall -Werror -Wextra -pedantic)
-target_compile_definitions(handycpp_test PRIVATE HANDYCPP_TEST)
-target_link_libraries(handycpp_test PRIVATE ${PROJECT_NAME})
-message(WARNING "test on")
-else()
-message(WARNING "test off: ${TEST_ON}")
-endif(TEST_ON MATCHES ON)
+if (TEST_ON MATCHES ON)
+    add_executable(handycpp_test test/test.cpp)
+    target_compile_features(handycpp_test INTERFACE cxx_std_17)
+    target_compile_options(handycpp_test PRIVATE -Wall -Werror -Wextra -pedantic)
+    target_compile_definitions(handycpp_test PRIVATE HANDYCPP_TEST)
+    target_link_libraries(handycpp_test PRIVATE ${PROJECT_NAME})
+    include(${CMAKE_SOURCE_DIR}/thirdparty/doctest/scripts/cmake/doctest.cmake)
+    include(CTest)
+    doctest_discover_tests(handycpp_test)
+
+    message(WARNING "test on")
+else ()
+    message(WARNING "test off: ${TEST_ON}")
+
+endif (TEST_ON MATCHES ON)
 
 ############################################# Install ##################################################
 install(TARGETS ${PROJECT_NAME}
@@ -64,9 +69,9 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file("${PROJECT_NAME}ConfigVersion.cmake"
         VERSION ${PROJECT_VERSION}
         COMPATIBILITY SameMajorVersion)
-if(NOT INCLUDE_INSTALL_DIR)
+if (NOT INCLUDE_INSTALL_DIR)
     set(INCLUDE_INSTALL_DIR include/handycpp)
-endif()
+endif ()
 configure_package_config_file(
         "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in"
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
