@@ -88,9 +88,9 @@ writeBmp(const std::string &outPath, const unsigned char *rgb, int w, int h, int
         for (int j = 0; j < h; j++) {
             int x = i;
             int y = (h - 1) - j;
-            r = *(rgb + w * y * pixel_stride);
-            g = *(rgb + w * y * pixel_stride + 1);
-            b = *(rgb + w * y * pixel_stride + 2);
+            r = rgb[(w * y + x) * pixel_stride];
+            g = rgb[(w * y + x) * pixel_stride + 1];
+            b = rgb[(w * y + x) * pixel_stride + 2];
             img[(x + y * w) * 3 + 2] = (unsigned char)(r);
             img[(x + y * w) * 3 + 1] = (unsigned char)(g);
             img[(x + y * w) * 3 + 0] = (unsigned char)(b);
