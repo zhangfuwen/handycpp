@@ -49,10 +49,26 @@ struct rgba_data {
 #endif
 
 #ifdef STB_IMAGE_WRITE_IMPLEMENTATION
+/**
+ * saveRgbaToPng file
+ * @param outPath
+ * @param rgba
+ * @param w
+ * @param h
+ * @return 1 on success, 0 on error
+ */
 [[maybe_unused]] int saveRgbaToPng(const std::string &outPath, const unsigned char *rgba, int w, int h) {
     return stbi_write_png(outPath.c_str(), w, h, 4, rgba, 4*w);
 }
 #else
+/**
+ * saveRgbaToPng file
+ * @param outPath
+ * @param rgba
+ * @param w
+ * @param h
+ * @return 1 on success, 0 on error
+ */
 [[maybe_unused]] int saveRgbaToPng(const std::string &outPath, const unsigned char *rgba, int w, int h);
 #endif
 

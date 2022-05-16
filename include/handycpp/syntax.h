@@ -26,25 +26,25 @@ namespace handycpp::syntax {
  *
  */
 struct defer {
-    defer(std::function<void (void)> f) : f_(f) {}
+    defer(std::function<void(void)> f) : f_(f) {}
     ~defer(void) { f_(); }
+
 private:
-    std::function<void (void)> f_;
+    std::function<void(void)> f_;
 };
+
+#define Defer(x) defer defer_##__LINE__([&]() { x; })
 #ifdef HANDYCPP_TEST
 TEST_CASE("handycpp::syntax::defer") {
     int i;
     {
         i = 0;
-        defer dt([&]() {
-            i++;
-        });
-        i=5;
+        defer dt([&]() { i++; });
+        i = 5;
     }
-    CHECK(i==6);
+    CHECK(i == 6);
 }
 #endif
-}
-
+} // namespace handycpp::syntax
 
 #endif // HANDYCPP_SYNTAX_H
