@@ -47,7 +47,7 @@ template <typename... Args> std::string log_format(const std::string &format, Ar
     return std::string{buf.get(), buf.get() + size - 1}; // We don't want the '\0' inside
 }
 template<>
-std::string log_format(const std::string &fmt)
+inline std::string log_format(const std::string &fmt)
 {
     return fmt;
 }
