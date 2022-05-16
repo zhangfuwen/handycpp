@@ -15,5 +15,6 @@
 #include "handycpp/string.h"
 #include "handycpp/syntax.h"
 #include "handycpp/time.h"
+#include "handycpp/human_readable.h"
 
 #endif // HANDYCPP_ALL_H
