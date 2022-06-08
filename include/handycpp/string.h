@@ -49,7 +49,7 @@ std::string format( const std::string& fmt, Args ... args )
 }
 
 template<>
-std::string format(const std::string &fmt)
+inline std::string format(const std::string &fmt)
 {
     return fmt;
 }
