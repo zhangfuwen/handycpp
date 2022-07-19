@@ -14,6 +14,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unistd.h>
 
 #if __cplusplus >= 201703L
 #include <filesystem>
