@@ -87,7 +87,7 @@ public:
     // Calls all connected functions.
     void emit(Args... p) {
         for (auto const &it : _slots) {
-            it.second(p...);
+            it.second(std::forward<Args>(p)...);
         }
     }
 
@@ -95,7 +95,7 @@ public:
     void emit_for_all_but_one(int excludedConnectionID, Args... p) {
         for (auto const &it : _slots) {
             if (it.first != excludedConnectionID) {
-                it.second(p...);
+                it.second(std::forward<Args>(p)...);
             }
         }
     }
@@ -104,7 +104,7 @@ public:
     void emit_for(int connectionID, Args... p) {
         auto const &it = _slots.find(connectionID);
         if (it != _slots.end()) {
-            it->second(p...);
+            it->second(std::forward<Args>(p)...);
         }
     }
 
@@ -153,6 +153,10 @@ public:
         a[0] = 'x';
         std::cout << "xxx end " << a[0] << std::endl;
     }
+    void test(std::string &a) {
+        a[0] = 'x';
+        printf("e %p\n", (void*)&a[0]);
+    }
 };
 TEST_CASE("handycpp::signal_slop_const_ref") {
     Signal<std::string &, int *> signal;
@@ -186,8 +190,16 @@ TEST_CASE("handycpp::signal_slop_const_ref") {
 
     CHECK((ret == tid));
     std::cout << s[0] << std::endl;
-    // TODO: pass by reference not working
-    CHECK((s[0] != 'x'));
+    CHECK((s[0] == 'x'));
+
+    Signal<std::string & > signal2;
+    std::string s1 = "y";
+    printf("a %p\n", (void*)s1.data());
+    signal2.connect_member(loop.get(), &MyThread2::test, loop.get());
+    signal2.emit(s1);
+    loop->enqueueSync([](){});
+    CHECK_EQ(s1[0], 'x');
+
 }
 
 

@@ -122,6 +122,9 @@ public:
         return task.get_future().get();
     }
 
+    template <class T> std::reference_wrapper<T> maybe_wrap(T& val) { return std::ref(val); }
+    template <class T> T&& maybe_wrap(T&& val) { return std::forward<T>(val); }
+
     /**
      * enqueueAsync
      * @tparam Func
@@ -148,7 +151,7 @@ public:
         using packaged_task_type = std::packaged_task<return_type()>;
 
         auto taskPtr = std::make_shared<packaged_task_type>(std::bind(
-            std::forward<Func>(callable), std::forward<Args>(args)...));
+            std::forward<Func>(callable), maybe_wrap(std::forward<Args>(args))...));
 
         enqueue(std::bind(&packaged_task_type::operator(), taskPtr));
 
@@ -162,7 +165,7 @@ public:
         using packaged_task_type = std::packaged_task<return_type()>;
 
         auto taskPtr = std::make_shared<packaged_task_type>(std::bind(
-            std::forward<std::function<Ret(Args...)>>(callable), std::forward<Args>(args)...));
+            std::forward<std::function<Ret(Args...)>>(callable), maybe_wrap(std::forward<Args>(args))...));
 
         enqueue(std::bind(&packaged_task_type::operator(), taskPtr));
 
