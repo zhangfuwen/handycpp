@@ -60,6 +60,7 @@ public:
 
     /**
      * enqueueSync
+     *  pass by reference supported
      * @tparam Func
      * @tparam Args
      * @param callable
@@ -73,17 +74,50 @@ public:
      * }, 1, 2, 3);
      * \endcode
      */
-    template <typename Func, typename... Args> auto enqueueSync(Func &&callable, Args &&...args) {
+    template <typename Ret, typename... Args>
+    auto enqueueSync(std::function<Ret(Args...)> &&callable, Args &&...args) {
         if (std::this_thread::get_id() == m_thread.get_id()) {
-            return std::invoke(std::forward<Func>(callable), std::forward<Args>(args)...);
+            return std::invoke(std::forward<std::function<Ret(Args...)>>(callable), std::forward<Args>(args)...);
+        }
+
+        using return_type = std::invoke_result_t<std::function<Ret(Args...)>, Args...>;
+        using packaged_task_type = std::packaged_task<return_type(Args && ...)>;
+
+        packaged_task_type task(std::forward<std::function<Ret(Args...)>>(callable));
+
+        enqueue([&] { task(std::forward<Args>(args)...); });
+
+        return task.get_future().get();
+    }
+
+    /**
+     * pass by reference not supported
+     * @tparam Func
+     * @tparam Args
+     * @param callable
+     * @param args
+     * @return
+     */
+    template<typename Func, typename... Args>
+    auto enqueueSync(Func&& callable, Args&& ...args)
+    {
+        if (std::this_thread::get_id() == m_thread.get_id())
+        {
+            return std::invoke(
+                std::forward<Func>(callable),
+                std::forward<Args>(args)...);
         }
 
         using return_type = std::invoke_result_t<Func, Args...>;
-        using packaged_task_type = std::packaged_task<return_type(Args && ...)>;
+        using packaged_task_type =
+            std::packaged_task<return_type(Args&&...)>;
 
         packaged_task_type task(std::forward<Func>(callable));
 
-        enqueue([&] { task(std::forward<Args>(args)...); });
+        enqueue([&]
+                {
+                    task(std::forward<Args>(args)...);
+                });
 
         return task.get_future().get();
     }
@@ -107,16 +141,40 @@ public:
      * std::cout << result.get();
      * \endcode
      */
-    template <typename Func, typename... Args> [[nodiscard]] auto enqueueAsync(Func &&callable, Args &&...args) {
+    template<typename Func, typename... Args>
+    [[nodiscard]] auto enqueueAsync(Func&& callable, Args&& ...args)
+    {
         using return_type = std::invoke_result_t<Func, Args...>;
         using packaged_task_type = std::packaged_task<return_type()>;
 
-        auto taskPtr =
-            std::make_shared<packaged_task_type>(std::bind(std::forward<Func>(callable), std::forward<Args>(args)...));
+        auto taskPtr = std::make_shared<packaged_task_type>(std::bind(
+            std::forward<Func>(callable), std::forward<Args>(args)...));
 
         enqueue(std::bind(&packaged_task_type::operator(), taskPtr));
 
         return taskPtr->get_future();
+    }
+
+    template<typename Ret, typename... Args>
+    [[nodiscard]] auto enqueueAsync(std::function<Ret(Args...)>& callable, Args&& ...args)
+    {
+        using return_type = std::invoke_result_t<std::function<Ret(Args...)>, Args...>;
+        using packaged_task_type = std::packaged_task<return_type()>;
+
+        auto taskPtr = std::make_shared<packaged_task_type>(std::bind(
+            std::forward<std::function<Ret(Args...)>>(callable), std::forward<Args>(args)...));
+
+        enqueue(std::bind(&packaged_task_type::operator(), taskPtr));
+
+        return taskPtr->get_future();
+    }
+
+
+    int gettid() {
+       return tid;
+    }
+    int getpid() {
+        return pid;
     }
 
 private:
@@ -127,8 +185,19 @@ private:
     bool m_running{true};
     std::thread m_thread{&EventLoop::threadFunc, this};
 
+    int tid;
+    int pid;
+
     void threadFunc() noexcept {
         std::vector<callable_t> readBuffer;
+#if defined(__linux__)
+        tid = (int)get_tid();
+        pid = (int)get_pid();
+#elif defined(_WIN32)
+        tid = (int)GetCurrentThreadId();
+        pid = (int)GetCurrentProcessId();
+#else
+#endif
 
         while (m_running) {
             {
@@ -154,8 +223,17 @@ private:
 TEST_CASE("handycpp::event_loop") {
     std::unique_ptr<EventLoop> loop = std::make_unique<EventLoop>();
 
-    std::future result = loop->enqueueAsync([](int x, int y) { return x + y; }, 1, 2);
+    std::function<int(int, int)> f = [](int x, int y) -> int {
+        return x+ y;
+    };
+    std::future result = loop->enqueueAsync(f, 1, 2);
     CHECK((result.get() == 3));
+
+
+    int a = 2 , b = 3;
+    std::future result1 = loop->enqueueAsync([&]() { a=b; });
+    result1.wait();
+    CHECK_EQ(a, b);
 }
 #endif
 
