@@ -196,11 +196,12 @@ static inline bool saveFile(char *data, int size, const std::string &filename = 
 }
 
 static inline void listFiles(
-    const std::string &path,
-    std::vector<std::string> &files,
-    bool recursive = false,
-    const bool showHiddenDirs = false,
-    bool include_folders = false) {
+    [[maybe_unused]] const std::string &path,
+    [[maybe_unused]] std::vector<std::string> &files,
+    [[maybe_unused]] bool recursive = false,
+    [[maybe_unused]] const bool showHiddenDirs = false,
+    [[maybe_unused]] bool include_folders = false) {
+#if defined(__linux__)
     DIR *dpdf;
     struct dirent *epdf;
     dpdf = opendir(path.c_str());
@@ -224,8 +225,11 @@ static inline void listFiles(
         }
     }
     closedir(dpdf);
+#else
+#endif
 }
 
+#if defined(__linux__)
 static inline void listFiles(const std::string &path, const std::function<void(const std::string &)> &cb) {
     if (auto dir = opendir(path.c_str())) {
         while (auto f = readdir(dir)) {
@@ -240,6 +244,8 @@ static inline void listFiles(const std::string &path, const std::function<void(c
         closedir(dir);
     }
 }
+#else
+#endif
 
 } // namespace handycpp::file
 #endif // HANDYCPP_FILE_H

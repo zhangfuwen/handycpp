@@ -7,14 +7,14 @@ project(handycpp VERSION 1.0.0 LANGUAGES CXX)
 # doctest
 option(INCLUDE_DOCTEST "include doc test project" OFF)
 include(FetchContent)
-#if(INCLUDE_DOCTEST)
+if(INCLUDE_DOCTEST)
 FetchContent_Populate(
         doctest
         GIT_REPOSITORY https://github.com/doctest/doctest
         GIT_TAG 2.4.7
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest
 )
-# end doctest
+endif(INCLUDE_DOCTEST)
 
 
 ################################# project ##################################################

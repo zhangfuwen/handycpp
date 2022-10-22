@@ -14,12 +14,25 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#ifdef __linux__
 #include <syslog.h>
+#else
+#endif
 #include <unistd.h>
 #include <utility>
 #ifdef HANDYCPP_TEST
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest/doctest.h"
+#endif
+
+#ifdef __linux__
+#define __os_getpid() getpid()
+#define __os_gettid() gettid()
+#elif defined(_WIN32)
+#include <windows.h>
+#define __os_getpid() GetCurrentProcessId()
+#define __os_gettid() GetCurrentThreadId()
+#else
 #endif
 
 #if __cplusplus >= 201703L
@@ -73,7 +86,7 @@ inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *tex
 
 #define FUN_INFO(fmt, ...)                                                                                             \
     do {                                                                                                               \
-        auto tid = gettid();                                                                                           \
+        auto tid = __os_gettid();                                                                                           \
         auto pid = getpid();                                                                                           \
         FUN_PRINT(                                                                                                     \
             "%d %d info %s:%d %s > " fmt,                                                                              \
@@ -87,7 +100,7 @@ inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *tex
 
 #define FUN_ERROR(fmt, ...)                                                                                            \
     do {                                                                                                               \
-        auto tid = gettid();                                                                                           \
+        auto tid = __os_gettid();                                                                                           \
         auto pid = getpid();                                                                                           \
         FUN_PRINT(                                                                                                     \
             "%d %d error %s:%d %s > " fmt,                                                                             \
@@ -101,7 +114,7 @@ inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *tex
 
 #define FUN_DEBUG(fmt, ...)                                                                                            \
     do {                                                                                                               \
-        auto tid = gettid();                                                                                           \
+        auto tid = __os_gettid();                                                                                           \
         auto pid = getpid();                                                                                           \
         FUN_PRINT(                                                                                                     \
             "%d %d debug %s:%d %s > " fmt,                                                                             \
@@ -116,7 +129,7 @@ inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *tex
 #define FUN_WARN(fmt, ...)                                                                                             \
     do {                                                                                                               \
         char buff[40];                                                                                                 \
-        auto tid = gettid();                                                                                           \
+        auto tid = __os_gettid();                                                                                           \
         auto pid = getpid();                                                                                           \
         FUN_PRINT(                                                                                                     \
             "%d %d warning %s:%d %s > " fmt,                                                                           \
@@ -130,7 +143,7 @@ inline LogWriterFunc g_logWrite = [](int level, const char *tag, const char *tex
 
 #define FUN_TRACE(fmt, ...)                                                                                            \
     do {                                                                                                               \
-        auto tid = gettid();                                                                                           \
+        auto tid = __os_gettid();                                                                                           \
         auto pid = getpid();                                                                                           \
         FUN_PRINT(                                                                                                     \
             "%d %d trace %s:%d %s > " fmt,                                                                             \

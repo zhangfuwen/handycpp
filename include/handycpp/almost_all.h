@@ -16,5 +16,6 @@
 #include "handycpp/syntax.h"
 #include "handycpp/time.h"
 #include "handycpp/human_readable.h"
+#include "handycpp/event_loop.h"
 
 #endif // HANDYCPP_ALL_H

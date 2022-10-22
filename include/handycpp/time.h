@@ -76,7 +76,9 @@ inline timespec operator+(const timespec& lhs, const timespec& rhs) {
 
 
 
+#if defined(__linux__)
 namespace {
+
 // buf needs to store 30 characters
 inline int timespec2str(char *buf, uint len, struct timespec *ts) {
     int ret;
@@ -175,6 +177,8 @@ inline std::string wall_clock_now() {
         return ret;
     }
 }
+
+#endif // __linux__
 
 /**
  * @usage
