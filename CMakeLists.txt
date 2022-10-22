@@ -5,7 +5,7 @@ project(handycpp VERSION 1.0.0 LANGUAGES CXX)
 ###################### external projects ###########################################
 
 # doctest
-option(INCLUDE_DOCTEST "include doc test project" ON)
+option(INCLUDE_DOCTEST "include doc test project" OFF)
 include(FetchContent)
 #if(INCLUDE_DOCTEST)
 FetchContent_Populate(
@@ -28,22 +28,22 @@ target_include_directories(${PROJECT_NAME} INTERFACE
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
         )
 
-if (INCLUDE_DOCTEST MATCHES ON)
+if (INCLUDE_DOCTEST)
     target_include_directories(${PROJECT_NAME} INTERFACE
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
             )
     target_compile_definitions(${PROJECT_NAME} INTERFACE HAS_DOCTEST)
-    message(WARNING "doctest on")
+    message("doctest on")
 else ()
-    message(WARNING "doctest off")
-endif (INCLUDE_DOCTEST MATCHES ON)
+    message("doctest off")
+endif (INCLUDE_DOCTEST)
 
 ########################################## test ######################################################
 
 option(TEST_ON "build and run test" OFF)
 
-if (TEST_ON MATCHES ON)
+if (TEST_ON)
     add_executable(handycpp_test test/test.cpp)
     target_compile_features(handycpp_test INTERFACE cxx_std_17)
     target_compile_options(handycpp_test PRIVATE -Wall -Werror -Wextra -pedantic)
@@ -53,11 +53,11 @@ if (TEST_ON MATCHES ON)
     include(CTest)
     doctest_discover_tests(handycpp_test)
 
-    message(WARNING "test on")
+    message("test on")
 else ()
-    message(WARNING "test off: ${TEST_ON}")
+    message("test off: ${TEST_ON}")
 
-endif (TEST_ON MATCHES ON)
+endif (TEST_ON)
 
 ############################################# Install ##################################################
 install(TARGETS ${PROJECT_NAME}
