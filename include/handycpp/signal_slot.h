@@ -133,7 +133,7 @@ TEST_CASE("handycpp::signal_slop") {
     signal.emit(1, 4);
     auto tid = loop->enqueueSync([]() {
 #if defined(__linux__)
-        return (int)get_tid();
+        return (int)gettid();
 #elif defined(_WIN32)
         return (int)GetCurrentThreadId();
 #else
@@ -180,7 +180,7 @@ TEST_CASE("handycpp::signal_slop_const_ref") {
 
     auto tid = loop->enqueueSync([]() {
 #if defined(__linux__)
-        return (int)get_tid();
+        return (int)gettid();
 #elif defined(_WIN32)
         return (int)GetCurrentThreadId();
 #else
@@ -188,7 +188,7 @@ TEST_CASE("handycpp::signal_slop_const_ref") {
 #endif
     });
 
-    CHECK((ret == tid));
+    CHECK_EQ(ret, tid);
     std::cout << s[0] << std::endl;
     CHECK((s[0] == 'x'));
 

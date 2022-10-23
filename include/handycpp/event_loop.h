@@ -9,6 +9,12 @@
 #include <future>
 #include <thread>
 #include <vector>
+#include <unistd.h>
+
+#if defined(__linux__)
+#include <sys/types.h>
+#else
+#endif
 
 /**
  * event loop is ran in a thread,
@@ -194,8 +200,9 @@ private:
     void threadFunc() noexcept {
         std::vector<callable_t> readBuffer;
 #if defined(__linux__)
-        tid = (int)get_tid();
-        pid = (int)get_pid();
+        tid = (int)::gettid();
+        pid = (int)::getpid();
+        printf("--%d\n", tid);
 #elif defined(_WIN32)
         tid = (int)GetCurrentThreadId();
         pid = (int)GetCurrentProcessId();
